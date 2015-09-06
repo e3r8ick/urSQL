@@ -6,6 +6,10 @@
 
 package ursql;
 
+import XMLmanager.*;
+import JSONmanager.*;
+
+
 /**
  *
  * @author Erick
@@ -16,7 +20,10 @@ public class UrSQL {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
+        XMLreader xmlreader = new XMLreader("C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\src\\XMLmanager\\archivoXML.xml");
+        XMLwriter xmlwriter = new XMLwriter();
+        JSONreader jsonreader = new JSONreader("archivojson.json");
+        JSONwriter jsonwriter = new JSONwriter();        
     }
     
 }
