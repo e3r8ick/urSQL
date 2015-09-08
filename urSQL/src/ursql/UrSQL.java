@@ -20,10 +20,10 @@ public class UrSQL {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        XMLreader xmlreader = new XMLreader("C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\src\\XMLmanager\\archivoXML.xml");
-        XMLwriter xmlwriter = new XMLwriter();
+        XMLreader xmlreader = new XMLreader("C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\src\\XMLmanager\\inputXML.xml");
+        XMLwriter xmlwriter = new XMLwriter("Estudiantes@Nombre#Carnet#Edad@Erick#201228433#21@Juan#5261615312#89");
         JSONreader jsonreader = new JSONreader("archivojson.json");
-        JSONwriter jsonwriter = new JSONwriter();        
+        JSONwriter jsonwriter = new JSONwriter();       
     }
     
 }
