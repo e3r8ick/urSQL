@@ -6,6 +6,8 @@
 
 package API;
 
+import java.util.List;
+
 /**
  *
  * @author Erick
@@ -14,6 +16,12 @@ public class SystemCatalog {
     
     String errorFile;
     String queryHistoryFile;
+    String schemaFile;
+    List plan;
+    //BTree schema;
     
+    public SystemCatalog(){
+        
+    }
     
 }
