@@ -41,23 +41,17 @@ public class SystemCatalog {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
-    public void createSchema (String name) throws SchemaAlreadyExistsException
+    public void createSchema (String name) throws Exception
     {
         /* IMPORTANTE: Agregar Nuevo Schema al archivo xml */
         Schema newSchema = new Schema(name);
         if (schemas.contains(newSchema))
         {
-            System.out.println("El Schema ya existe");
             throw new exceptions.SchemaAlreadyExistsException();
         }
         else
         {
-            System.out.println("Agregando el Schema: " + newSchema.name);
             schemas.add(newSchema);
-        }
-        for (Schema database : schemas)
-        {
-            System.out.println(database.name);
         }
     }
     

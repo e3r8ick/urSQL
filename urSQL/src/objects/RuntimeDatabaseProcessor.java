@@ -42,8 +42,14 @@ public class RuntimeDatabaseProcessor {
      */
     public List<String> listDatabases ()
     {
-        List<String> lista = new ArrayList<>();
-        return lista;
+        List<Schema> list = systemCatalog.getSchemas();
+        List<String> schemesList = new ArrayList<>();
+        for (Schema database : list)
+        {
+            schemesList.add(database.name);
+            System.out.println(database.name);
+        }
+        return schemesList;
     }
     
     /**
@@ -52,6 +58,7 @@ public class RuntimeDatabaseProcessor {
      */
     public String start ()
     {
+        /* IMPORTANTE: cargar */
         return "";
     }
     
