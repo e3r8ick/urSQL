@@ -1,5 +1,6 @@
 package objects;
 
+import bplustree.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class Table {
     
     //protected List<Register> registerTree;  
     
-    protected bplustree.BTree<Register, String> registerTree;
+    private bplustree.BTree<Register, String> registerTree;
     
     protected List<Constraint> constraints;
     
@@ -61,6 +62,7 @@ public class Table {
         {
             System.out.println(constr.toString());
         }
+        registerTree = new BTree();
     }
     
     /**
@@ -73,6 +75,7 @@ public class Table {
     {
         this.name = name;
         this.metadataFile = metadataFile;
+        registerTree = new BTree();
     }
     
     /**
@@ -127,6 +130,20 @@ public class Table {
      */
     public void setDataFile(String dataFile) {
         this.dataFile = dataFile;
+    }
+
+    /**
+     * @return the registerTree
+     */
+    public bplustree.BTree<Register, String> getRegisterTree() {
+        return registerTree;
+    }
+
+    /**
+     * @param registerTree the registerTree to set
+     */
+    public void setRegisterTree(bplustree.BTree<Register, String> registerTree) {
+        this.registerTree = registerTree;
     }
     
     

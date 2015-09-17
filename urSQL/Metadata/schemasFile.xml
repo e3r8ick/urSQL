@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<baseLoader>
-  <Schema> C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Esquemas\\EsquemaEsquema1.xml</Schema>
-  <Schema> C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Esquemas\\EsquemaEsquema2.xml</Schema>
-</baseLoader>
+<EsquemaPrueba>
+  <TableFile>Metadata/Esquemas/EsquemaEsquemaPrueba.xml</TableFile>
+</EsquemaPrueba>

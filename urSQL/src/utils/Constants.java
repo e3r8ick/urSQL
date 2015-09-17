@@ -20,4 +20,8 @@ public interface Constants {
     public final int VARCHAR_SIZE = 25;
     public final int DATETIME_SIZE = 8;
     
+    public final String SCHEMA_PATH = "Metadata/Esquemas/Esquema";
+    public final String TABLES_PATH = "Metadata/Tablas/Tabla";
+    public final String SCHEMAS_FILE = "Metadata/schemasFile.xml";
+    
 }
