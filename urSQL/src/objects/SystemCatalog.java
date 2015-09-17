@@ -1,8 +1,11 @@
 package objects;
 
+import exceptions.SchemaAlreadyExistsException;
+import exceptions.SchemaDoesntExistsException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -27,11 +30,10 @@ public class SystemCatalog {
     /* IMPORTANTE: falta implementar el plan de la base de datos */
     
     protected final String schemasFile = "metadata/schemasFile.xml";
-    
-    public SystemCatalog()
+
+    public SystemCatalog() 
     {
-        /* cargar los esquemas en el archivo schemasFile*/
-       loadSchemas();
+        schemas = new ArrayList<>();   
     }
     
     public Schema getSchema (String name)
@@ -39,11 +41,38 @@ public class SystemCatalog {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
-    public void createSchema (String name)
+    public void createSchema (String name) throws SchemaAlreadyExistsException
     {
         /* IMPORTANTE: Agregar Nuevo Schema al archivo xml */
         Schema newSchema = new Schema(name);
-        schemas.add(newSchema);
+        if (schemas.contains(newSchema))
+        {
+            System.out.println("El Schema ya existe");
+            throw new exceptions.SchemaAlreadyExistsException();
+        }
+        else
+        {
+            System.out.println("Agregando el Schema: " + newSchema.name);
+            schemas.add(newSchema);
+        }
+        for (Schema database : schemas)
+        {
+            System.out.println(database.name);
+        }
+    }
+    
+    public void deleteSchema (String name) throws SchemaDoesntExistsException
+    {
+        Schema newSchema = new Schema(name);
+        if (schemas.contains(newSchema))
+        {
+            schemas.remove(newSchema);
+            
+        }
+        else
+        {
+            throw new exceptions.SchemaDoesntExistsException();
+        }
     }
     
     /**

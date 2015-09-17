@@ -19,7 +19,7 @@ import org.jdom2.output.XMLOutputter;
  * @author maikol_beto
  * @version 1.0
  */
-public class Schema {
+public class Schema implements Comparable<Schema> {
     
     protected List<Table> tables;  /* cambiar por una estructura mas eficiente */
     
@@ -175,4 +175,17 @@ public class Schema {
         xmlFile.delete();
         System.out.println("Esquema Borrado");
     }
+
+    @Override
+    public int compareTo(Schema o) {
+        return this.name.compareTo(o.name);
+    }
+    
+    
+    @Override
+    public boolean equals (Object o)
+    {
+        return this.name.equals( ((Schema)o).name );
+    }
+    
 }

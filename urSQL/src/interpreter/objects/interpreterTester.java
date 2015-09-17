@@ -17,6 +17,9 @@ public class interpreterTester {
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         
+        objects.RuntimeDatabaseProcessor linkToWorld = 
+                new objects.RuntimeDatabaseProcessor();
+        
         while (true)
         {
             String input = in.nextLine();
@@ -30,10 +33,10 @@ public class interpreterTester {
             {
                 interpreter.analizador.AnalizadorLexico lexico = 
                     new interpreter.analizador.AnalizadorLexico(new FileReader("query.txt"));
-            
+                
                 interpreter.analizador.AnalizadorSintactico parser = 
-                    new interpreter.analizador.AnalizadorSintactico(lexico);
-            
+                    new interpreter.analizador.AnalizadorSintactico(lexico, linkToWorld);
+                
                 parser.parse();
             }
             catch (Exception e)

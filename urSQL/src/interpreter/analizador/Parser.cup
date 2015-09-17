@@ -7,15 +7,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java_cup.runtime.*;
 
-import interpreter.objects.Antenna;
 import interpreter.objects.ColumnDefinition;
 import interpreter.objects.Constraint;
 import interpreter.objects.AggregateFunction;
 import interpreter.objects.WhereStatment;
 
+import objects.RuntimeDatabaseProcessor;
+
 action code {:
     
-    public Antenna linkToWorld = new Antenna();
+    public RuntimeDatabaseProcessor linkToWorld = new RuntimeDatabaseProcessor();
 
     public List<ColumnDefinition> lista = new ArrayList<>();
 
@@ -29,6 +30,14 @@ action code {:
 
 parser code {:
     //esta es la manera en que se puede acceder a un objeto que se genera durante la etapa del parsing
+    
+    public AnalizadorSintactico (   java_cup.runtime.Scanner s, 
+                                    RuntimeDatabaseProcessor rdp)
+    {
+        
+        super(s);
+    }
+ 
 
     @Override
     public void syntax_error(Symbol sy) {

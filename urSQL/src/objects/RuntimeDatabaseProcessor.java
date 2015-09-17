@@ -1,5 +1,6 @@
 package objects;
 
+import exceptions.SchemaAlreadyExistsException;
 import interpreter.objects.AggregateFunction;
 import interpreter.objects.ColumnDefinition;
 import interpreter.objects.Constraint;
@@ -18,22 +19,21 @@ public class RuntimeDatabaseProcessor {
     /**
      * Crea un nuevo esquema
      * @param name Database name
-     * @return Error code
+     * @throws java.lang.Exception En caso de que el Schema ya exista
      */
-    public int createDatabase (String name)
+    public void createDatabase (String name) throws Exception
     {
         systemCatalog.createSchema(name);
-        return 0;
     }
     
     /**
      * Elimina el esquema indicado
      * @param name Database name
-     * @return Error code
+     * @throws java.lang.Exception En caso de que el Schema no exista
      */
-    public int dropDatabase (String name)
+    public void dropDatabase (String name) throws Exception
     {
-        return 0;
+        systemCatalog.deleteSchema(name);
     }
     
     /**
