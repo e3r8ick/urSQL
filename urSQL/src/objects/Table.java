@@ -1,7 +1,16 @@
 package objects;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import objects.constraints.*;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 /**
  * Representación en caliente de una tabla de la base de datos 
@@ -18,13 +27,15 @@ public class Table {
     
     protected String name;
     
-    protected String dataFile;
+    private String dataFile;
     
     protected String metadataFile;
     
     protected String indexesFile;
     
-    protected List<Register> registerTree;  //protected bplustree.BTree<Register, String> registerTree;
+    //protected List<Register> registerTree;  
+    
+    protected bplustree.BTree<Register, String> registerTree;
     
     protected List<Constraint> constraints;
     
@@ -60,7 +71,8 @@ public class Table {
     public Table (  String name, 
                     String metadataFile)
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+        this.name = name;
+        this.metadataFile = metadataFile;
     }
     
     /**
@@ -69,7 +81,7 @@ public class Table {
      */
     public void saveTree()
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+         
     }
     
     /**
@@ -79,9 +91,20 @@ public class Table {
      */
     public void loadTree(String xmlFile)
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+        
     }
     
+    /**
+     * Guarda la tabla en disco
+     */
+    public void saveTable(){
+       
+    }
+    
+    public void loadTable(String xmlFile){
+       
+    }
+            
     public void createConstraint (Constraint constraint)
     {
         constraints.add(constraint);
@@ -90,6 +113,20 @@ public class Table {
     public List<Constraint> getConstraintsByType (int type)
     {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    /**
+     * @return the dataFile
+     */
+    public String getDataFile() {
+        return dataFile;
+    }
+
+    /**
+     * @param dataFile the dataFile to set
+     */
+    public void setDataFile(String dataFile) {
+        this.dataFile = dataFile;
     }
     
     
