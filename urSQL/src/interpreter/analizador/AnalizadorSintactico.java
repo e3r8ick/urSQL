@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java_cup.runtime.*;
-import interpreter.objects.Antenna;
+import objects.RuntimeDatabaseProcessor;
 import interpreter.objects.ColumnDefinition;
 import interpreter.objects.Constraint;
 import interpreter.objects.AggregateFunction;
@@ -264,7 +264,7 @@ class CUP$AnalizadorSintactico$actions {
 
 
     
-    public Antenna linkToWorld = new Antenna();
+    public RuntimeDatabaseProcessor linkToWorld = new RuntimeDatabaseProcessor();
 
     public List<ColumnDefinition> lista = new ArrayList<>();
 

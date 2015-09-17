@@ -130,10 +130,6 @@ public class SystemCatalog {
     public List<Schema> getSchemas() {
         return schemas;
     }
-    
-    public void addSchema(Schema schema){
-        schemas.add(schema);
-    }
 
     /**
      * @param schemas the schemas to set
