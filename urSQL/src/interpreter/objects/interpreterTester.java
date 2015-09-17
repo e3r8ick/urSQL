@@ -41,7 +41,7 @@ public class interpreterTester {
             }
             catch (Exception e)
             {
-                        
+                System.out.println(e);
             }
             
         }
