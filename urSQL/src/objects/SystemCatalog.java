@@ -31,7 +31,9 @@ public class SystemCatalog {
     
     public void createSchema (String name)
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+        /* IMPORTANTE: Agregar Nuevo Schema al archivo xml */
+        Schema newSchema = new Schema(name);
+        schemas.add(newSchema);
     }
     
     

@@ -1,0 +1,339 @@
+package interpreter.analizador;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java_cup.runtime.*;
+
+import interpreter.objects.Antenna;
+import interpreter.objects.ColumnDefinition;
+import interpreter.objects.Constraint;
+import interpreter.objects.AggregateFunction;
+import interpreter.objects.WhereStatment;
+
+action code {:
+    
+    public Antenna linkToWorld = new Antenna();
+
+    public List<ColumnDefinition> lista = new ArrayList<>();
+
+    public List<String> listaColumnasSelect = new ArrayList<>();
+
+    public List<String> listajoin = new ArrayList<>();
+
+    public List<String> listaValuesInsert = new ArrayList<>();
+
+:}
+
+parser code {:
+    //esta es la manera en que se puede acceder a un objeto que se genera durante la etapa del parsing
+
+    @Override
+    public void syntax_error(Symbol sy) {
+        if (sy != null && (token)sy.value!=null)
+        {
+            token t=(token)sy.value;
+            System.out.println("Error sintáctico cerca de \""+ t.getCadena()+"\" : [Fila "+t.getRow()+" : Columna "+t.getCol()+"]");
+        }
+        else
+        {
+            System.out.println("Error sintáctico, faltan parámetros en el comando");
+        }
+    }
+:}
+
+/*---------------------------------TERMINALES------------------------------*/
+
+terminal MAYOR, MENOR, IGUAL, ABRIRPAR, ASTERISCO, CERRARPAR, COMA, PUNTOCOMA, 
+NEWLINE;
+
+terminal CREATE, DATABASE, DROP, LIST, DATABASES, START, GET, STATUS, STOP,
+DISPLAY, SET, TABLE, AS, INTEGER, DECIMAL, CHAR, VARCHAR, DATETIME, NULL, NOT, 
+PRIMARY, KEY, ALTER, ADD, CONSTRAINT, FOREIGN, REFERENCES, INDEX, ON, 
+SELECT, FROM, WHERE, GROUP, BY, JOIN, LIKE, IS, COUNT, AVERAGE, MIN, MAX, 
+UPDATE, DELETE, INSERT, INTO, VALUES;
+
+
+terminal token NUM, PALABRA, ID;
+
+/*-------------------------------NO TERMINALES----------------------------*/
+
+non terminal programa, clpcommands, ddlcommands, dmlcommands, columndefinition,
+columnlist, valueslist, selectionlist, joinstatment, joinstatment2;
+
+non terminal ColumnDefinition column;
+
+non terminal String primarykey, type, nullability, compareoperator, groupby;
+
+non terminal Constraint constraintdefinition;
+
+non terminal AggregateFunction aggregatefunctions;
+
+non terminal WhereStatment where;
+
+/*-------------------------------GRAMATICAS-------------------------------*/
+start with programa;
+
+programa                ::=     clpcommands
+                                | ddlcommands
+                                | dmlcommands;
+
+clpcommands             ::=     CREATE DATABASE ID:a 
+                                {:
+                                    linkToWorld.createDatabase(a.getCadena());
+                                :}
+                                | DROP DATABASE ID:a
+                                {:
+                                    linkToWorld.dropDatabase(a.getCadena());
+                                :}
+                                | LIST DATABASES
+                                {:
+                                    linkToWorld.listDatabases();
+                                :}
+                                | START
+                                {:
+                                    linkToWorld.start();
+                                :}
+                                | GET STATUS
+                                {:
+                                    linkToWorld.getStatus();
+                                :}
+                                | STOP
+                                {:
+                                    linkToWorld.stop();
+                                :}
+                                | DISPLAY DATABASE ID:a
+                                {:
+                                    linkToWorld.displayDatabase(a.getCadena());
+                                :};
+
+ddlcommands             ::=     SET DATABASE ID:a
+                                {:
+                                    linkToWorld.setDatabase(a.getCadena());
+                                :}
+                                | CREATE TABLE ID:a AS 
+                                    ABRIRPAR columndefinition COMA
+                                    primarykey:c CERRARPAR PUNTOCOMA
+                                {:
+                                    linkToWorld.createTable(a.getCadena(), c, lista);
+                                :}
+                                | CREATE TABLE error
+                                {:
+                                    System.out.println("error en el comando de crear tabla");
+                                :}
+                                | ALTER TABLE ID:a ADD CONSTRAINT constraintdefinition:b
+                                {:
+                                    b.name = a.getCadena();
+                                    linkToWorld.alterTable(b);
+                                :}
+                                | DROP TABLE ID:a
+                                {:
+                                    linkToWorld.dropTable(a.getCadena());
+                                :}
+                                | CREATE INDEX ID:a ON ID:b 
+                                    ABRIRPAR ID:c CERRARPAR
+                                {:
+                                    linkToWorld.createIndex(a.getCadena(),
+                                                            b.getCadena(),
+                                                            c.getCadena());
+                                :};
+
+columndefinition        ::=     columndefinition:a COMA column:b
+                                {:
+                                    lista.add(b);
+                                :}
+                                | column:a
+                                {:
+                                    lista.add(a);
+                                :};
+
+column                  ::=     ID:a type:b nullability:c
+                                {:
+                                    Boolean nulo = c.equals("1") ? true : false;
+                                    RESULT = new ColumnDefinition (a.getCadena(),b, nulo);
+                                :};
+
+type                    ::=     INTEGER
+                                {:
+                                    RESULT = "integer";
+                                :}
+                                | DECIMAL ABRIRPAR 
+                                    NUM:a COMA NUM:b CERRARPAR
+                                {:
+                                    RESULT =    "decimal:" + 
+                                            String.valueOf(a.getEntero()) + 
+                                            ":" + String.valueOf(b.getEntero());
+                                :}
+                                | CHAR ABRIRPAR NUM:a CERRARPAR
+                                {:
+                                    RESULT = "char:" + String.valueOf(a.getEntero());
+                                :}
+                                | VARCHAR
+                                {:
+                                    RESULT = "varchar";
+                                :}
+                                | DATETIME
+                                {:
+                                    RESULT = "datetime";
+                                :};
+
+nullability             ::=     NULL
+                                {:
+                                    RESULT = "1";
+                                :}
+                                | NOT NULL
+                                {:
+                                    RESULT = "0";
+                                :};
+
+primarykey              ::=     PRIMARY KEY ABRIRPAR ID:a CERRARPAR
+                                {:
+                                   RESULT = a.getCadena();
+                                :};
+
+constraintdefinition    ::=     FOREIGN KEY ID:a REFERENCES ID:b 
+                                    ABRIRPAR ID:c CERRARPAR
+                                {:
+                                    RESULT = new Constraint (
+                                                                a.getCadena(),
+                                                                b.getCadena(),
+                                                                c.getCadena()
+                                                            );
+                                :};
+
+dmlcommands             ::=     SELECT selectionlist COMA aggregatefunctions:b
+                                    FROM ID:c joinstatment where:e groupby:f
+                                {:
+                                    linkToWorld.select( listaColumnasSelect,
+                                                        b,
+                                                        c.getCadena(),
+                                                        listajoin,
+                                                        e,
+                                                        f);
+                                :}
+                                | UPDATE ID:a SET ID:b IGUAL PALABRA:c 
+                                    WHERE where:d
+                                {:
+                                    linkToWorld.update( a.getCadena(),
+                                                        b.getCadena(),
+                                                        c.getCadena(),d);
+                                :}
+                                | DELETE FROM ID:a 
+                                    WHERE where:b
+                                {:
+                                    linkToWorld.delete( a.getCadena(),b);
+                                :}
+                                | INSERT INTO ID:a 
+                                    ABRIRPAR ID:b CERRARPAR 
+                                    VALUES ABRIRPAR valueslist CERRARPAR
+                                {:
+                                    linkToWorld.insertInto( a.getCadena(),
+                                                            listaColumnasSelect,
+                                                            listaValuesInsert);
+                                :}
+;
+
+selectionlist           ::=     ASTERISCO
+                                | columnlist;
+
+columnlist              ::=     columnlist ID:a
+                                {:
+                                    listaColumnasSelect.add(a.getCadena());
+                                :}
+                                | ID:a
+                                {:
+                                    listaColumnasSelect.add(a.getCadena());
+                                :};
+
+valueslist              ::=     valueslist ID:a
+                                {:
+                                    listaValuesInsert.add(a.getCadena());
+                                :}
+                                | ID:a
+                                {:
+                                    listaValuesInsert.add(a.getCadena());
+                                :};
+
+aggregatefunctions      ::=     COUNT ABRIRPAR ID:a CERRARPAR
+                                {:
+                                    RESULT = new AggregateFunction("COUNT", a.getCadena());
+                                :}
+                                | AVERAGE ABRIRPAR ID:a CERRARPAR
+                                {:
+                                    RESULT = new AggregateFunction("AVERAGE", a.getCadena());
+                                :}
+                                | MIN ABRIRPAR ID:a CERRARPAR
+                                {:
+                                    RESULT = new AggregateFunction("MIN", a.getCadena());
+                                :}
+                                | MAX ABRIRPAR ID:a CERRARPAR
+                                {:
+                                    RESULT = new AggregateFunction("MAX", a.getCadena());
+                                :}
+                                |
+                                {:
+                                    RESULT = null;
+                                :};
+
+joinstatment            ::=     joinstatment2
+                                |;
+
+joinstatment2           ::=     joinstatment2 JOIN ID:b
+                                {:
+                                    listajoin.add(b.getCadena());
+                                :}
+                                | JOIN ID:a
+                                {:
+                                    listajoin.add(a.getCadena());
+                                :};
+
+where                   ::=     WHERE ID:a compareoperator:b PALABRA:c
+                                {:
+                                    RESULT = new WhereStatment (  a.getCadena(),
+                                                                b, 
+                                                                c.getCadena());
+                                :}
+                                |
+                                {:
+                                    RESULT = null;
+                                :};
+
+compareoperator         ::=     MAYOR
+                                {:
+                                    RESULT = "MAYOR";
+                                :}
+                                | MENOR
+                                {:
+                                    RESULT = "MENOR";
+                                :}
+                                | IGUAL
+                                {:
+                                    RESULT = "IGUAL";
+                                :}
+                                | LIKE
+                                {:
+                                    RESULT = "LIKE";
+                                :}
+                                | NOT
+                                {:
+                                    RESULT = "NOT";
+                                :}
+                                | IS NULL
+                                {:
+                                    RESULT = "ISNULL";
+                                :}
+                                | IS NOT NULL
+                                {:
+                                    RESULT = "ISNOTNULL";
+                                :};
+
+groupby                 ::=     GROUP BY ID:a
+                                {:
+                                    RESULT = a.getCadena();
+                                :}
+                                |
+                                {:
+                                    RESULT = "";
+                                :};
