@@ -25,7 +25,7 @@ public class Register implements Comparable<Register>  {
      */
     public Register (List<String> registerValues, Table tabla)
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+        
     }
 
     @Override

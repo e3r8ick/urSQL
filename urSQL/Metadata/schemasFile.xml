@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<EsquemaPrueba>
-  <TableFile>Metadata/Esquemas/EsquemaEsquemaPrueba.xml</TableFile>
-</EsquemaPrueba>
+<schemaFile>
+  <SchemaFile>Metadata/Esquemas/EsquemaEsquemaPrueba.xml</TableFile>
+</schemaFile>

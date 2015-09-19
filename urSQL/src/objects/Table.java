@@ -84,7 +84,8 @@ public class Table {
      */
     public void saveTree()
     {
-         
+         System.out.println(registerTree.hashCode());
+         System.out.println((Object)registerTree.getClass().getDeclaredAnnotations());
     }
     
     /**
@@ -97,16 +98,6 @@ public class Table {
         
     }
     
-    /**
-     * Guarda la tabla en disco
-     */
-    public void saveTable(){
-       
-    }
-    
-    public void loadTable(String xmlFile){
-       
-    }
             
     public void createConstraint (Constraint constraint)
     {
