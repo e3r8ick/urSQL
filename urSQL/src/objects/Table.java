@@ -1,10 +1,16 @@
 package objects;
 
+import exceptions.ConstraintColumnDoesntExistsException;
+import exceptions.PrimaryKeyException;
+import interpreter.objects.ColumnDefinition;
+import objects.datatypes.*;
+import objects.constraints.*;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import objects.constraints.*;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -17,11 +23,11 @@ import org.jdom2.output.XMLOutputter;
  * @see StoredDataManager
  * @author maikol_beto
  */
-public class Table {
+public class Table implements utils.Constants, Comparable<Table> {
     
     protected List<String> columnNames;
     
-    protected List<Integer> columnTypes;
+    protected List<DataType> columnTypes;
     
     protected List<Integer> columnSizes;
     
@@ -52,15 +58,48 @@ public class Table {
      * @param constraints Constraints de las columnas de la tabla
      */
     public Table (  String name, 
-                    List<String> columnNames, 
-                    List<Integer> columnTypes,
-                    List<Integer> columnSizes, 
-                    List<Constraint> constraints)
-    {
-        for (Constraint constr : constraints)
+                    String primaryKey, 
+                    List<ColumnDefinition> columns) throws Exception
+    {        
+        columnNames = new ArrayList<>();
+        columnTypes = new ArrayList<>();
+        columnSizes = new ArrayList<>();
+        constraints = new ArrayList<>();        
+        
+        this.name = name;
+        
+        for (ColumnDefinition column : columns)
         {
-            System.out.println(constr.toString());
+            columnNames.add(column.name);
+            columnTypes.add(column.type);
+            if (column.type.type == CHAR)
+            {
+                columnSizes.add( ((URSQL_Char) column.type).variableSize); 
+            }
+            else
+            {
+                columnSizes.add(column.type.size); 
+            }
+            if (!column.nullability)
+            {
+                constraints.add(new NotNull(column.name));
+            }
         }
+        if (!columnNames.contains(primaryKey))
+        {
+            throw new exceptions.PrimaryKeyException();
+        }
+        constraints.add(new PrimaryKey(primaryKey));
+        
+    }
+    
+    /**
+     * Constructor para comparaciones rápidas
+     * @param name Nombre de la tabla que se desea comparar
+     */
+    public Table (String name)
+    {
+        this.name = name;
     }
     
     /**
@@ -105,8 +144,31 @@ public class Table {
        
     }
             
-    public void createConstraint (Constraint constraint)
+    public void createConstraint (Constraint constraint, Table referencedTable) throws Exception
     {
+        ForeignKey temporalConstraint = (ForeignKey) constraint;
+        /* Revisa que la columna sobre la cual queremos aplicar el constrint exista */
+        if (!columnNames.contains(temporalConstraint.column))
+        {
+            throw new exceptions.ConstraintColumnDoesntExistsException();
+        }
+        /* Revisa que la columna a la cual queremos referenciar exista en la tabla a la que queremos referenciar */
+        if (!referencedTable.columnNames.contains(temporalConstraint.referencedColumn))
+        {
+            throw new exceptions.ReferencedColumnDoesntExistsException();
+        }
+        
+        /* indice de la columna que buscamos en esta tabla */
+        int indexhere = columnNames.indexOf(temporalConstraint.column);
+        
+        /* indice de la columna que queremos referenciar en la otra tabla */
+        int indexthere = referencedTable.columnNames.indexOf(temporalConstraint.referencedColumn);
+        
+        /* Revisamos los tipos de las tablas para saber que calzan */
+        if (columnTypes.get(indexhere).type != referencedTable.columnTypes.get(indexthere).type)
+        {
+            throw new exceptions.DifferentTypesConstraintException();
+        }
         constraints.add(constraint);
     }
     
@@ -129,5 +191,16 @@ public class Table {
         this.dataFile = dataFile;
     }
     
+    @Override
+    public int compareTo(Table o) {
+        return this.name.compareTo(o.name);
+    }
+    
+    
+    @Override
+    public boolean equals (Object o)
+    {
+        return this.name.equals( ((Table)o).name );
+    }
     
 }

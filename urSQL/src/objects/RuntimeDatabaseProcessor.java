@@ -1,12 +1,18 @@
 package objects;
 
+import com.sun.corba.se.impl.orbutil.closure.Constant;
+import exceptions.NoSchemaSelectedException;
 import exceptions.SchemaAlreadyExistsException;
+import exceptions.SchemaDoesntExistsException;
 import interpreter.objects.AggregateFunction;
 import interpreter.objects.ColumnDefinition;
-import interpreter.objects.Constraint;
 import interpreter.objects.WhereStatment;
+
+import objects.constraints.*;
+
 import java.util.ArrayList;
 import java.util.List;
+import utils.Constants;
 
 /**
  * @author maikol_beto
@@ -14,6 +20,8 @@ import java.util.List;
 public class RuntimeDatabaseProcessor {
     
     protected SystemCatalog systemCatalog = new SystemCatalog();
+    
+    protected Schema actualSchema;
     
     
     /**
@@ -58,8 +66,22 @@ public class RuntimeDatabaseProcessor {
      */
     public String start ()
     {
-        /* IMPORTANTE: cargar */
-        return "";
+        String answer = "";
+        /* IMPORTANTE: cargar todas las bases de datos */
+        List<Schema> list = systemCatalog.getSchemas();
+        List<String> schemesList = new ArrayList<>();
+        for (Schema database : list)
+        {
+            String reportline = "";
+            reportline += "El Scheme: " + database.name + " contiene las siguientes tablas:\n";
+            for (Table tabla : database.getTables())
+            {
+                reportline += "   - " + tabla.name + "\n";
+            }
+            answer += reportline;
+        }
+        System.out.println(answer);
+        return answer;
     }
     
     /**
@@ -79,8 +101,51 @@ public class RuntimeDatabaseProcessor {
      * de datos, null constraint), constraints, cantidad de elementos en la 
      * tabla entre otros.
      */
-    public String displayDatabase (String name)
+    public String displayDatabase (String name) throws Exception
     {
+        Schema schema = systemCatalog.getSchema(name);
+        List<Table> tablas = schema.getTables();
+        for (Table tabla : tablas)
+        {
+            System.out.println("Table: " + tabla.name);
+            utils.DisplayHelper help = new utils.DisplayHelper();
+            for (int index = 0; index<tabla.columnNames.size(); index++)
+            {
+                String nule = "YES";
+                String key = "";
+                for (Constraint constraint : tabla.constraints)
+                {
+                    if (constraint.type == Constants.NOT_NULL)
+                    {
+                        if ( ((NotNull)constraint).column.equalsIgnoreCase(tabla.columnNames.get(index)) )
+                        {
+                            nule = "NO";
+                        }
+                    }
+                    if (constraint.type == Constants.PRIMARY_KEY)
+                    {
+                        if ( ((PrimaryKey)constraint).primaryKey.equalsIgnoreCase(tabla.columnNames.get(index)) )
+                        {
+                            key = "PK";
+                        }
+                    }
+                    if (constraint.type == Constants.FOREIGN_KEY)
+                    {
+                        if ( ((ForeignKey)constraint).column.equalsIgnoreCase(tabla.columnNames.get(index)) )
+                        {
+                            key = "FK";
+                        }
+                    }
+                }
+                String type = tabla.columnTypes.get(index).toString();
+                String field = tabla.columnNames.get(index);
+                help.addRow(    field, 
+                                type, 
+                                nule, key);
+            }
+            help.print();
+            System.out.println("");
+        }
         return "";
     }
     
@@ -98,34 +163,50 @@ public class RuntimeDatabaseProcessor {
      * @param name Schema name
      * @return Error code
      */
-    public int setDatabase (String name)
+    public void setDatabase (String name) throws Exception
     {
-        return 0;
+        Schema oldSchema = systemCatalog.getSchema(name);
+        actualSchema = oldSchema;
     }
     
-    public int createTable (String name, 
+    public void createTable (String name, 
                             String primaryKey, 
-                            List<ColumnDefinition> columns)
+                            List<ColumnDefinition> columns) throws Exception
     {
-        System.out.println("nombre: " + name);
-        System.out.println("llave primaria: " + primaryKey);
-        for (ColumnDefinition column : columns)
+        if (actualSchema == null)
         {
-            System.out.println(column.toString());
+            throw new exceptions.NoSchemaSelectedException();
         }
-        return 0;
+        else
+        {
+            actualSchema.createTable(name, primaryKey, columns);
+        }
     }
     
-    public int alterTable (Constraint constraint)
+    public void alterTable (String name, Constraint constraint) throws Exception
     {
-        System.out.println("tabla: " + constraint.name);
-        System.out.println(constraint.toString());
-        return 0;
+        if (actualSchema == null)
+        {
+            throw new exceptions.NoSchemaSelectedException();
+        }
+        else
+        {
+            Table oldTable = actualSchema.getTable(name);
+            oldTable.createConstraint(constraint, 
+                    actualSchema.getTable(((ForeignKey)constraint).referencedTable));
+        }
     }
     
-    public int dropTable (String name)
+    public void dropTable (String name) throws Exception
     {
-        return 0;
+        if (actualSchema == null)
+        {
+            throw new exceptions.NoSchemaSelectedException();
+        }
+        else
+        {
+            actualSchema.deleteTable(name);
+        }
     }
     
     public int createIndex (String name,

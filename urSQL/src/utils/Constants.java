@@ -10,7 +10,10 @@ public interface Constants {
     public final int NOT_NULL = 2;
     
     public final int INTEGER = 0;
-    public final int VARCHAR = 0;
+    public final int CHAR = 1;
+    public final int DECIMAL = 2;
+    public final int VARCHAR = 3;
+    public final int DATETIME = 4;
     /* faltan tipos de datos por implementar */
     
     /* tamaño en bytes de cada tipo de dato */

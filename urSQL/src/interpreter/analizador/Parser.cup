@@ -8,9 +8,11 @@ import java.util.List;
 import java_cup.runtime.*;
 
 import interpreter.objects.ColumnDefinition;
-import interpreter.objects.Constraint;
 import interpreter.objects.AggregateFunction;
 import interpreter.objects.WhereStatment;
+
+import objects.datatypes.*;
+import objects.constraints.*;
 
 import objects.RuntimeDatabaseProcessor;
 
@@ -30,14 +32,6 @@ action code {:
 
 parser code {:
     //esta es la manera en que se puede acceder a un objeto que se genera durante la etapa del parsing
-    
-    public AnalizadorSintactico (   java_cup.runtime.Scanner s, 
-                                    RuntimeDatabaseProcessor rdp)
-    {
-        
-        super(s);
-    }
- 
 
     @Override
     public void syntax_error(Symbol sy) {
@@ -74,13 +68,15 @@ columnlist, valueslist, selectionlist, joinstatment, joinstatment2;
 
 non terminal ColumnDefinition column;
 
-non terminal String primarykey, type, nullability, compareoperator, groupby;
+non terminal String primarykey, nullability, compareoperator, groupby;
 
-non terminal Constraint constraintdefinition;
+non terminal ForeignKey constraintdefinition;
 
 non terminal AggregateFunction aggregatefunctions;
 
 non terminal WhereStatment where;
+
+non terminal DataType type;
 
 /*-------------------------------GRAMATICAS-------------------------------*/
 start with programa;
@@ -134,8 +130,7 @@ ddlcommands             ::=     SET DATABASE ID:a
                                 :}
                                 | ALTER TABLE ID:a ADD CONSTRAINT constraintdefinition:b
                                 {:
-                                    b.name = a.getCadena();
-                                    linkToWorld.alterTable(b);
+                                    linkToWorld.alterTable(a.getCadena(), b);
                                 :}
                                 | DROP TABLE ID:a
                                 {:
@@ -166,26 +161,26 @@ column                  ::=     ID:a type:b nullability:c
 
 type                    ::=     INTEGER
                                 {:
-                                    RESULT = "integer";
+                                    RESULT = new URSQL_Integer();
                                 :}
                                 | DECIMAL ABRIRPAR 
                                     NUM:a COMA NUM:b CERRARPAR
                                 {:
-                                    RESULT =    "decimal:" + 
-                                            String.valueOf(a.getEntero()) + 
-                                            ":" + String.valueOf(b.getEntero());
+                                    RESULT = new URSQL_Decimal(
+                                        a.getEntero(),
+                                        b.getEntero());
                                 :}
                                 | CHAR ABRIRPAR NUM:a CERRARPAR
                                 {:
-                                    RESULT = "char:" + String.valueOf(a.getEntero());
+                                    RESULT = new URSQL_Char(a.getEntero());
                                 :}
                                 | VARCHAR
                                 {:
-                                    RESULT = "varchar";
+                                    RESULT = new URSQL_Varchar();
                                 :}
                                 | DATETIME
                                 {:
-                                    RESULT = "datetime";
+                                    RESULT = new URSQL_Datetime();
                                 :};
 
 nullability             ::=     NULL
@@ -205,7 +200,7 @@ primarykey              ::=     PRIMARY KEY ABRIRPAR ID:a CERRARPAR
 constraintdefinition    ::=     FOREIGN KEY ID:a REFERENCES ID:b 
                                     ABRIRPAR ID:c CERRARPAR
                                 {:
-                                    RESULT = new Constraint (
+                                    RESULT = new ForeignKey (
                                                                 a.getCadena(),
                                                                 b.getCadena(),
                                                                 c.getCadena()

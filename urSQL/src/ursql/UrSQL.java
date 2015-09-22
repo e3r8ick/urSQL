@@ -6,6 +6,8 @@
 
 package ursql;
 
+import java.util.Arrays;
+import java.util.List;
 import objects.RuntimeDatabaseProcessor;
 import objects.Schema;
 import objects.SystemCatalog;
@@ -21,22 +23,29 @@ public class UrSQL {
      * @param args the command line arguments
      */
     public static void main(String[] args){
-       RuntimeDatabaseProcessor run = new RuntimeDatabaseProcessor();
-       /*SystemCatalog system = new SystemCatalog(); 
-       Schema esquema = new Schema("Esquema1","C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Esquemas\\EsquemaEsquema1.xml");
-       Table tabla = new Table("Tabla1","C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Tablas\\TablaTabla1.xml");
-       Table tabla2 = new Table("Tabla2","C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Tablas\\TablaTabla2.xml");
-       */
-       /*tabla.saveTable();
-       tabla2.saveTable();
-       esquema.addTable(tabla);
-       esquema.addTable(tabla2);
-       esquema.saveTables();
-       esquema.loadTables();
-       tabla.loadTable("C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Tablas\\TablaTabla1.xml");
-       esquema.dropSchema();*/
+        
+       Connection conn = new Connection();
        
-      // FileOutputStream file = new FileOutputStream("C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Datos\\DatoDato1.bin");
+       conn.startConnection();
+       
+       List<String> commands = Arrays.asList(   "CREATE DATABASE serpentario",
+                                                "CREATE DATABASE matricula",
+                                                "LIST DATABASES",
+                                                "SET DATABASE serpentario",
+                                                "CREATE TABLE serpiente AS (idSerpiente INTEGER NOT NULL, especie INTEGER NOT NULL, nombre VARCHAR NULL, nacimiento DATETIME NOT NULL, PRIMARY KEY (idSerpiente));",
+                                                "CREATE TABLE especie AS (idEspecie INTEGER NOT NULL, nombreComun VARCHAR NULL, familia VARCHAR NOT NULL, PRIMARY KEY (idEspecie));",
+                                                "ALTER TABLE serpiente ADD CONSTRAINT FOREIGN KEY especie REFERENCES especie(idEspecie)",
+                                                "DISPLAY DATABASE serpentario",
+                                                "DROP TABLE especie",
+                                                "DROP TABLE serpiente",
+                                                "DISPLAY DATABASE serpentario");
+       
+       
+       for (String comd : commands)
+       {
+           System.out.println(comd);
+           conn.executeCommand(comd);
+       }
        
     }
     

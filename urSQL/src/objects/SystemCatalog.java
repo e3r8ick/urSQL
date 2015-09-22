@@ -36,9 +36,18 @@ public class SystemCatalog {
         schemas = new ArrayList<>();   
     }
     
-    public Schema getSchema (String name)
+    public Schema getSchema (String name) throws SchemaDoesntExistsException
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Schema newSchema = new Schema(name);
+        if (schemas.contains(newSchema))
+        {
+            int index = schemas.indexOf(newSchema);
+            return schemas.get(index);
+        }
+        else
+        {
+            throw new exceptions.SchemaDoesntExistsException();
+        }
     }
     
     public void createSchema (String name) throws Exception
