@@ -24,21 +24,28 @@ public class Schema implements Comparable<Schema> {
     
     protected List<Table> tables;  /* cambiar por una estructura mas eficiente */
     
-    protected String name;
+    private String name;
     
     protected String tablesFile;
     
     /**
-     * Crea un objeto de tipo Schema por primera vez, es decir sin tablas
-     * @param name Nombre de la base de datos (Schema)
+     * Crea un esquema que ya existia
      */
-    public Schema (String name)
+    public Schema()
     {
+        tables = new ArrayList<>();
+        /* crear archivo de las tablas */
+        //loadTables();
+    }
+    
+    /**
+     * Crea un esquema por primera vez
+     * @param name 
+     */
+    public Schema(String name){
         this.name = name;
         tables = new ArrayList<>();
         tablesFile = Constants.SCHEMA_PATH+name+".xml";
-        /* crear archivo de las tablas */
-        loadTables();
     }
     
     /**
@@ -85,7 +92,18 @@ public class Schema implements Comparable<Schema> {
      */
     public Table getTable (String name)
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Table tmp = tables.get(0);
+        for(int i = 0; i<tables.size();i++){
+            if(tables.get(i).name.equals(name)){
+                System.out.println(tables.get(i));
+                tmp =tables.get(i);
+                break;
+            }
+        }
+        if(!(tmp.name.equals(name))){
+            System.out.println("Tabla no encontrado");
+        }
+        return tmp;
     }
     
     /**
@@ -97,14 +115,14 @@ public class Schema implements Comparable<Schema> {
         for(int i = 0; i<tables.size();i++){
             //Se crea un SAXBuilder para poder parsear el archivo
            SAXBuilder builder = new SAXBuilder();
-           File File = new File( tables.get(i).metadataFile );
+           File File = new File( tables.get(i).getMetadataFile());
            try
            {
                //Se crea el documento a traves del archivo
                Document document = (Document) builder.build( File );
                //Se obtiene la raiz 
                Element rootNode = document.getRootElement();
-               name = rootNode.getName();
+                setName(rootNode.getName());
                System.out.println("Tabla: "+tables.get(i).name+" cargada");
                //Se obtiene la lista de hijos de la raiz 
                List list = rootNode.getChildren();
@@ -149,16 +167,16 @@ public class Schema implements Comparable<Schema> {
 
 
             tabla.addContent(new Element("DataFile").setText(tables.get(i).getDataFile()));
-            tabla.addContent(new Element("MetaDataFile").setText(tables.get(i).metadataFile));
+            tabla.addContent(new Element("MetaDataFile").setText(tables.get(i).getMetadataFile()));
 
 
             XMLOutputter xmlOutput = new XMLOutputter();
 
             // display nice nice
             xmlOutput.setFormat(Format.getPrettyFormat());
-            xmlOutput.output(doc, new FileWriter(Constants.TABLES_PATH+name+".xml"));
+            xmlOutput.output(doc, new FileWriter(Constants.TABLES_PATH+getName()+".xml"));
 
-            System.out.println("Tabla "+name+" salvada");
+            System.out.println("Tabla "+getName()+" salvada");
           } catch (IOException io) {
             System.out.println(io.getMessage());
           }
@@ -181,14 +199,28 @@ public class Schema implements Comparable<Schema> {
 
     @Override
     public int compareTo(Schema o) {
-        return this.name.compareTo(o.name);
+        return this.getName().compareTo(o.getName());
     }
     
     
     @Override
     public boolean equals (Object o)
     {
-        return this.name.equals( ((Schema)o).name );
+        return this.getName().equals( ((Schema)o).getName());
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
     }
     
 }

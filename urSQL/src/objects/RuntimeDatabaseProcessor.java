@@ -47,7 +47,7 @@ public class RuntimeDatabaseProcessor {
     public void listDatabases ()
     {
         for(int i = 0; i<getSystemCatalog().getSchemas().size();i++){
-            System.out.println(getSystemCatalog().getSchemas().get(i).name);
+            System.out.println(getSystemCatalog().getSchemas().get(i).getName());
         }
     }
     

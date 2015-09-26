@@ -36,9 +36,21 @@ public class SystemCatalog {
         loadSchemas();
     }
     
+    
     public Schema getSchema (String name)
     {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Schema tmp = schemas.get(0);
+        for(int i = 0; i<schemas.size();i++){
+            if(schemas.get(i).getName().equals(name)){
+                System.out.println(schemas.get(i));
+                tmp =schemas.get(i);
+                break;
+            }
+        }
+        if(!(tmp.getName().equals(name))){
+            System.out.println("Esquema no encontrado");
+        }
+        return tmp;
     }
     
     public void createSchema (String name) throws Exception
@@ -72,37 +84,39 @@ public class SystemCatalog {
     /**
      * 
      */
-    public void saveSchemas(){
+    public void saveSchemas() throws IOException{
+        Element schemasList = new Element("SchemasFile");
+        Document doc = new Document(schemasList);
         for(int i = 0; i<getSchemas().size();i++){
             try {
-               Element tabla = new Element("SchemasFile");
-               Document doc = new Document(tabla);
-
-               tabla.addContent(new Element((getSchemas().get(i)).name).setText((getSchemas().get(i).tablesFile)));
-
+               schemasList.addContent(new Element((getSchemas().get(i)).getName()).setText((getSchemas().get(i).tablesFile)));
+               
                XMLOutputter xmlOutput = new XMLOutputter();
 
                xmlOutput.setFormat(Format.getPrettyFormat());
                xmlOutput.output(doc, new FileWriter(Constants.SCHEMAS_FILE));
 
-               System.out.println("Esquema "+getSchemas().get(i).name+" Salvado");
+               System.out.println("Esquema "+getSchemas().get(i).getName()+" Salvado");
          } catch (IOException io) {
            System.out.println(io.getMessage());
          }
         }
+        XMLOutputter xmlOutput = new XMLOutputter();
+
+        xmlOutput.setFormat(Format.getPrettyFormat());
+        xmlOutput.output(doc, new FileWriter(Constants.SCHEMAS_FILE));
         for(int i = 0; i<getSchemas().size();i++){
             try {
-               Element tabla = new Element(getSchemas().get(i).name);
-               Document doc = new Document(tabla);
+               Element tabla = new Element(getSchemas().get(i).getName());
+               Document doc2 = new Document(tabla);
 
                tabla.addContent(new Element("TableFile").setText((getSchemas().get(i).tablesFile)));
 
-               XMLOutputter xmlOutput = new XMLOutputter();
+               XMLOutputter xmlOutput2 = new XMLOutputter();
 
-               xmlOutput.setFormat(Format.getPrettyFormat());
-               xmlOutput.output(doc, new FileWriter(Constants.SCHEMAS_FILE));
+               xmlOutput2.setFormat(Format.getPrettyFormat());
+               xmlOutput2.output(doc2, new FileWriter(Constants.SCHEMA_PATH+getSchemas().get(i).getName()+".xml"));
 
-               System.out.println("Esquema "+getSchemas().get(i).name+" Salvado");
          } catch (IOException io) {
            System.out.println(io.getMessage());
          }
@@ -151,13 +165,16 @@ public class SystemCatalog {
            //Se obtiene la lista de hijos de la raiz 
            List list = rootNode.getChildren();
            //Se recorre la lista de hijos
+           Schema tmp=new Schema(rootNode.getName());
+           schemas.add(tmp);
            for ( int j = 0; j < list.size(); j++ )
            {
                //Se obtiene el elemento 
                Element schema = (Element) list.get(j);
                //Se obtiene el atributo que esta en el tag 
-                   System.out.println("Esquema: "+schema.getName()+","+schema.getValue());
-                   schemas.add(new Schema(schema.getName(),schema.getValue()));
+                   System.out.println(rootNode.getName()+": "+
+                           schema.getName()+","+schema.getValue());
+                   tmp.addTable(new Table(schema.getName(),schema.getValue()));
            }
        }catch ( IOException | JDOMException io ) {
            System.out.println( io.getMessage() );

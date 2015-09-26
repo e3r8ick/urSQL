@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Esquema1EsquemaPrueba>
+<EsquemaEsquemaPrueba>
   <Tabla1> /Metadata/Tablas/TablaTabla1.xml</Tabla1>
-  <Tabla2> /Metadata/Tablas/TablaTabla2.xml</Tabla2>
-</Esquema1EsquemaPrueba>
+</EsquemaEsquemaPrueba>

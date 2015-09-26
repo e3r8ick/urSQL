@@ -17,13 +17,18 @@ public class UrSQL {
 
     /**
      * @param args the command line arguments
+     * @throws exceptions.SchemaAlreadyExistsException
      */
     public static void main(String[] args) throws SchemaAlreadyExistsException, Exception{
         
         RuntimeDatabaseProcessor procesor = new RuntimeDatabaseProcessor();
         procesor.listDatabases();
         
-        /*Table tabla = new Table("Tabla1","C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Tablas\\TablaTabla1.xml");
+        procesor.getSystemCatalog().createSchema("Esquema5");
+        procesor.getSystemCatalog().saveSchemas();
+        
+        
+        Table tabla = new Table("Tabla4","/Metadata/Tablas/TablaTabla4.xml");
         
         List list = new ArrayList();
         list.add("Erick");
@@ -39,7 +44,7 @@ public class UrSQL {
         list3.add("Nest74or");
         BTree<Register, String> tree = new BTree<>();
         tree.insert(new Register(list,tabla), "Erick");
-        System.out.println(tabla);
+        tree.toString();
         //tree.insert(new Register(list2,tabla), "Juan");
         //tree.insert(new Register(list3,tabla), "Maikol");
         tabla.saveTree();

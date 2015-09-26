@@ -85,7 +85,8 @@ public class Table {
      */
     public void saveTree()
     {
-         /*for(int i = 0; i<registerTree.size();i++){
+        registerTree.toString();
+        /* for(int i = 0; i<registerTree;i++){
             try {
             Element tabla = new Element(tables.get(i).name);
             Document doc = new Document(tabla);
@@ -156,6 +157,20 @@ public class Table {
      */
     public void setRegisterTree(bplustree.BTree<Register, String> registerTree) {
         this.registerTree = registerTree;
+    }
+
+    /**
+     * @return the metadataFile
+     */
+    public String getMetadataFile() {
+        return metadataFile;
+    }
+
+    /**
+     * @param metadataFile the metadataFile to set
+     */
+    public void setMetadataFile(String metadataFile) {
+        this.metadataFile = metadataFile;
     }
     
     
