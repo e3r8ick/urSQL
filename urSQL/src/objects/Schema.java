@@ -72,6 +72,7 @@ public class Schema implements Comparable<Schema> {
                                 List<ColumnDefinition> columns) throws Exception
     {
         Table newTable = new Table(name, primaryKey, columns);
+        newTable.dataFile = utils.Constants.DATOS + this.name + File.separator + name;
         if (tables.contains(newTable))
         {
             throw new exceptions.TableAlreadyExistsException();

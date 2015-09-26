@@ -61,6 +61,8 @@ public class SystemCatalog {
         else
         {
             schemas.add(newSchema);
+            File directorio = new File(utils.Constants.DATOS + name);
+            directorio.mkdir();
         }
     }
     
@@ -70,7 +72,8 @@ public class SystemCatalog {
         if (schemas.contains(newSchema))
         {
             schemas.remove(newSchema);
-            
+            File directorio = new File(utils.Constants.DATOS + name);
+            directorio.delete();
         }
         else
         {

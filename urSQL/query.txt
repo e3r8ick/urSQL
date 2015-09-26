@@ -1,1 +1,1 @@
-DISPLAY DATABASE serpentario
+SELECT * FROM serpiente

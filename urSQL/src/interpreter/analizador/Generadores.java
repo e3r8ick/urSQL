@@ -3,6 +3,8 @@ package interpreter.analizador;
 import java.io.File;
 
 /**
+ * Compila los archivos Escaner.flex y Parser.cup para generar las clases de 
+ * AnalizadorSintactico.java y AnalizadorLexico.java
  * @author maikol_beto
  */
 public class Generadores {

@@ -21,6 +21,16 @@ public interface Constants {
     public final int CHAR_SIZE = 1;
     public final int DECIMAL_SIZE = 16;
     public final int VARCHAR_SIZE = 25;
-    public final int DATETIME_SIZE = 8;
+    public final int DATETIME_SIZE = 12;
+    
+    public final int COUNT = 1;
+    public final int AVERAGE = 2;
+    public final int MIN = 3;
+    public final int MAX = 4;
+    
+    public final int COLUMN = 1;
+    public final int AGGREGATEFUNCTION = 2;
+    
+    public final String DATOS = "Metadata/Datos/";
     
 }

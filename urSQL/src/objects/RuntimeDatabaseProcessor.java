@@ -1,21 +1,18 @@
 package objects;
 
-import com.sun.corba.se.impl.orbutil.closure.Constant;
-import exceptions.NoSchemaSelectedException;
-import exceptions.SchemaAlreadyExistsException;
-import exceptions.SchemaDoesntExistsException;
-import interpreter.objects.AggregateFunction;
-import interpreter.objects.ColumnDefinition;
-import interpreter.objects.WhereStatment;
-
+import exceptions.*;
+import interpreter.objects.*;
 import objects.constraints.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import objects.select.SelectColumn;
 import utils.Constants;
 
 /**
+ * Recibe las intrucciones del intérprete de comandos para llamar al 
+ * SystemCatalog y ejecutarlas
  * @author maikol_beto
+ * @version 1.0
  */
 public class RuntimeDatabaseProcessor {
     
@@ -25,8 +22,8 @@ public class RuntimeDatabaseProcessor {
     
     
     /**
-     * Crea un nuevo esquema
-     * @param name Database name
+     * Crea un nuevo Schema a partir del nombre
+     * @param name Nombre del Schema que queremos crear
      * @throws java.lang.Exception En caso de que el Schema ya exista
      */
     public void createDatabase (String name) throws Exception
@@ -35,8 +32,8 @@ public class RuntimeDatabaseProcessor {
     }
     
     /**
-     * Elimina el esquema indicado
-     * @param name Database name
+     * Elimina el Schema cuyo nombre sea name
+     * @param name Nombre del Schema que se desea borrar
      * @throws java.lang.Exception En caso de que el Schema no exista
      */
     public void dropDatabase (String name) throws Exception
@@ -45,7 +42,7 @@ public class RuntimeDatabaseProcessor {
     }
     
     /**
-     * Genera un listado de todos los esquemas existentes
+     * Genera un listado de todos los Schemas existentes
      * @return Lista con los nombres de los esuqemas
      */
     public List<String> listDatabases ()
@@ -100,6 +97,7 @@ public class RuntimeDatabaseProcessor {
      * @return Listado de tablas y para cada tabla las columnas (nombre, tipo
      * de datos, null constraint), constraints, cantidad de elementos en la 
      * tabla entre otros.
+     * @throws java.lang.Exception En caso de que el Schema no exista
      */
     public String displayDatabase (String name) throws Exception
     {
@@ -161,7 +159,7 @@ public class RuntimeDatabaseProcessor {
      * Establece el esquema actual sobre el que se aplicarán los comandos 
      * posteriores
      * @param name Schema name
-     * @return Error code
+     * @throws java.lang.Exception En caso de que el Schema no exista
      */
     public void setDatabase (String name) throws Exception
     {
@@ -169,6 +167,14 @@ public class RuntimeDatabaseProcessor {
         actualSchema = oldSchema;
     }
     
+    /**
+     * Crea un nuevo Table en urSQL para el Scheme seleccionado (actualSchema)
+     * @param name Nombre del nuevo Table
+     * @param primaryKey Llave primaria del nuevo Table
+     * @param columns Definición de cada una de las columnas del Table 
+     * @see ColumnDefinition
+     * @throws Exception En caso de que la tabla ya exista
+     */
     public void createTable (String name, 
                             String primaryKey, 
                             List<ColumnDefinition> columns) throws Exception
@@ -183,6 +189,17 @@ public class RuntimeDatabaseProcessor {
         }
     }
     
+    /**
+     * Modifica un Table, vinculando una de sus columnas a otra columna en otra
+     * Table (Llave foránea)
+     * @param name Nombre del Table
+     * @param constraint Definición del Constraint ForeignKey que deseamos crear
+     * @throws Exception En los siguientes casos:
+     * 1. El objeto Table no existe
+     * 2. El Table que se desea referenciar no existe
+     * 3. La columna que se desea referenciar no existe
+     * 4. Las columnas son de tipos distintos
+     */
     public void alterTable (String name, Constraint constraint) throws Exception
     {
         if (actualSchema == null)
@@ -197,6 +214,12 @@ public class RuntimeDatabaseProcessor {
         }
     }
     
+    /**
+     * Elimina un objeto Table de la base de datos
+     * @param name Nombre del Table que deseamos eliminar
+     * @throws Exception En caso en el que el Table no exista o esté siendo 
+     * referenciada por otro Table
+     */
     public void dropTable (String name) throws Exception
     {
         if (actualSchema == null)
@@ -209,24 +232,71 @@ public class RuntimeDatabaseProcessor {
         }
     }
     
+    /**
+     * 
+     * @param name
+     * @param tableName
+     * @param columnName
+     * @return 
+     */
     public int createIndex (String name,
                             String tableName,
                             String columnName)
     {
         return 0;
     }
-    
-    public int select ( List<String> selectionList, 
-                        AggregateFunction aggregateFunction,
+        
+    public int select ( List<SelectColumn> selectionList,
                         String tableNameFrom,
                         List<String> listJoin,
                         WhereStatment whereStatment,
-                        String groupingColumns)
+                        String groupingColumns) throws Exception
     {
-        System.out.println("comando dml select completado");
+        if (actualSchema == null)
+        {
+            throw new exceptions.NoSchemaSelectedException();
+        }
+        else
+        {
+            Table actualTable = actualSchema.getTable(tableNameFrom);
+            if (whereStatment == null)
+            {
+                if (groupingColumns.equals(""))
+                {
+                    actualTable.select(selectionList);
+                }
+                else
+                {
+
+                }
+            }
+            else
+            {
+                if (groupingColumns.equals(""))
+                {
+                    actualTable.select( selectionList, 
+                                        whereStatment.column, 
+                                        whereStatment.operator, 
+                                        whereStatment.value);
+                }
+                else
+                {
+
+                }
+            }
+        }
         return 0;
     }
     
+    /**
+     * Actualiza las filas del Table que cumplan la condición del WHERE, o todos
+     * los datos de la columna
+     * @param tableName Nombre del Table en el que vamos a actualizar los datos
+     * @param columnName Columna que vamos a modificar
+     * @param newValue Nuevo valor que va a tomar la o las filas
+     * @param whereStatment Condición del WHERE
+     * @return 
+     */
     public int update ( String tableName,
                         String columnName,
                         String newValue,
@@ -236,19 +306,44 @@ public class RuntimeDatabaseProcessor {
         return 0;
     }
     
-    public int delete ( String tableName,
-                        WhereStatment whereStatment)
+    public void delete ( String tableName,
+                        WhereStatment whereStatment) throws Exception
     {
-        System.out.println("comando dml delete completado");
-        return 0;
+        if (actualSchema == null)
+        {
+            throw new exceptions.NoSchemaSelectedException();
+        }
+        else
+        {
+            Table actualTable = actualSchema.getTable(tableName);
+            actualTable.deleteRegister( whereStatment.column,
+                                        whereStatment.operator,
+                                        whereStatment.value);
+        }
     }
     
-    public int insertInto ( String tableName,
+    /**
+     * Inserta en Table los valores para las columnas especificadas
+     * @param tableName
+     * @param columns
+     * @param values
+     * @return 
+     */
+    public void insertInto ( String tableName,
                             List<String> columns,
-                            List<String> values)
+                            List<String> values) throws Exception
     {
-        System.out.println("comando dml insert into completado");
-        return 0;
+        if (columns.size() != values.size())
+            throw new exceptions.NumberOfValuesException();
+        if (actualSchema == null)
+        {
+            throw new exceptions.NoSchemaSelectedException();
+        }
+        else
+        {
+            Table actualTable = actualSchema.getTable(tableName);
+            actualTable.insertRegister(columns, values);
+        }
     }
     
 }

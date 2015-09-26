@@ -1,7 +1,7 @@
 package objects;
 
-import exceptions.ConstraintColumnDoesntExistsException;
-import exceptions.PrimaryKeyException;
+import bplustree.*;
+import exceptions.*;
 import interpreter.objects.ColumnDefinition;
 import objects.datatypes.*;
 import objects.constraints.*;
@@ -11,12 +11,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.input.SAXBuilder;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
+import objects.select.SelectColumn;
+import org.jdom2.*;
+import ursql.ResultSetNode;
+import utils.Constants;
 
 /**
  * Representación en caliente de una tabla de la base de datos 
@@ -33,15 +31,13 @@ public class Table implements utils.Constants, Comparable<Table> {
     
     protected String name;
     
-    private String dataFile;
+    protected String dataFile;
     
     protected String metadataFile;
     
     protected String indexesFile;
     
-    //protected List<Register> registerTree;  
-    
-    protected bplustree.BTree<Register, String> registerTree;
+    protected bplustree.BTree<String, Register> registerTree;
     
     protected List<Constraint> constraints;
     
@@ -90,6 +86,8 @@ public class Table implements utils.Constants, Comparable<Table> {
             throw new exceptions.PrimaryKeyException();
         }
         constraints.add(new PrimaryKey(primaryKey));
+        
+        registerTree = new BTree<>();
         
     }
     
@@ -190,6 +188,181 @@ public class Table implements utils.Constants, Comparable<Table> {
     public void setDataFile(String dataFile) {
         this.dataFile = dataFile;
     }
+    
+    public void insertRegister (List<String> columns, List<String> values) throws Exception
+    {
+        List<String> orderedValues = new ArrayList<>();
+        String primaryKey = "";
+        for (Constraint constraint : constraints)
+        {
+            if (constraint.type==Constants.PRIMARY_KEY)
+                primaryKey = ((PrimaryKey)constraint).primaryKey;
+        }
+        for (String column : columnNames)
+        {
+            for (int index=0; index<columns.size(); index++)
+            {
+                if (columns.get(index).equals(primaryKey))
+                    primaryKey = values.get(index);
+                if ( columns.get(index).equals(column) )
+                    orderedValues.add(values.get(index));
+            }
+        }
+        
+        if (registerTree.search(primaryKey)!=null)
+        {
+            throw new exceptions.PrimaryKeyAlreadyExists();
+        } 
+        else 
+        {
+            Register registro = new Register(orderedValues, this, primaryKey);
+            registerTree.insert(registro.primaryKey, registro);
+        }
+
+    }
+    
+    /**
+     * SELECT solamente con los nombres de las columnas que se desean mostrar y 
+     * el nombre de la tabla ej: SELECT * FROM tableName
+     * @param selectionList columnas que deseamos mostrar en la respuesta del 
+     * SELECT
+     */
+    public void select (List<SelectColumn> selectionList)
+    {
+        if (selectionList.isEmpty())
+        {
+            ursql.ResultSet rs = new ursql.ResultSet(columnNames);
+            List<Register> whereResult = selectAll();
+            for (Register registro : whereResult)
+            {
+                ursql.ResultSetNode rsn = new ResultSetNode(registro.atributeValues);
+                rs.addValue(rsn);
+            }
+            rs.printResult();
+        }
+    }
+    
+    public void select (List<SelectColumn> selectionList,
+                        String column, String operator, String value // WHERE statment
+                        ) throws Exception
+    {
+        List<Register> whereResult = 
+                whereStatment(column, operator, value);
+        
+        if (selectionList.isEmpty())
+        {
+            for (Register registro : whereResult)
+            {
+                System.out.println(registro.toString());
+            }
+        }
+        else
+        {
+            for (SelectColumn iterator : selectionList)
+            {
+                System.out.print(iterator + "  -  ");
+            }
+            for (Register registro : whereResult)
+            {
+                for (int index = 0;index<columnNames.size();index++)
+                {
+                    if (selectionList.contains(columnNames.get(index)))
+                    {
+                        System.out.print(registro.atributeValues.get(index));
+                    }
+                }
+                System.out.println("");
+            }
+        }
+    }
+    
+    private List<Register> selectAll ()
+    {
+        List<Register> respuesta = new ArrayList<>();
+        bplustree.BTreeLeafNode<String, Register> firstLeaf = registerTree.getFirstLeaf();
+        while (firstLeaf != null)
+        {
+            for (Object registro : firstLeaf.values)
+            {
+                if (registro != null)
+                {
+                    Register registroTemporal = (Register) registro;
+                    respuesta.add(registroTemporal);
+                }
+            }
+            firstLeaf = (BTreeLeafNode<String, Register>) firstLeaf.getRightSibling();
+        }
+        return respuesta;
+    }
+    
+    private List<Register> whereStatment (
+        String column, String operator, String value) throws Exception
+    {
+        List<Register> respuesta = 
+                new ArrayList<>();
+        
+        int numColumn = 0;
+        for (int index = 0;index<columnNames.size();index++)
+        {
+            if (columnNames.get(index).equals(column))
+            {
+                numColumn = index;
+                break;
+            }
+        }
+        
+        bplustree.BTreeLeafNode<String, Register> firstLeaf = registerTree.getFirstLeaf();
+        while (firstLeaf != null)
+        {
+            for (Object registro : firstLeaf.values)
+            {
+                if (registro != null)
+                {
+                    Register registroTemporal = (Register) registro;
+                    if (operator.equals("=") || operator.equals(">") || operator.equals("<"))
+                    {
+                        if (utils.Convert.compare(registroTemporal.atributeValues.get(numColumn), 
+                                operator, value, columnTypes.get(numColumn).type))
+                        {
+                            respuesta.add(registroTemporal);
+                        }
+                    }
+                    else if (operator.equals("like"))
+                    {
+                        if (utils.Convert.like(registroTemporal.atributeValues.get(numColumn), value))
+                        {
+                            respuesta.add(registroTemporal);
+                        }
+                    }
+                    else if (operator.equals("not"))
+                    {
+                        if (!utils.Convert.like(registroTemporal.atributeValues.get(numColumn), value))
+                        {
+                            respuesta.add(registroTemporal);
+                        }
+                    }
+                    else if (operator.equals("is null") || operator.equals("is not null"))
+                    {
+                        /* ´por implementar */
+                    }
+                }
+            }
+            firstLeaf = (BTreeLeafNode<String, Register>) firstLeaf.getRightSibling();
+        }
+        return respuesta;
+    }
+    
+    public void deleteRegister (String column, String operator, String value) throws Exception
+    {
+        List<Register> porBorrar = 
+                whereStatment(column, operator, value);
+        
+        for (Register registro : porBorrar)
+        {
+            registerTree.delete(registro.primaryKey);
+        }
+    }
+    
     
     @Override
     public int compareTo(Table o) {
