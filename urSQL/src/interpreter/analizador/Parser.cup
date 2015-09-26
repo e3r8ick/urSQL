@@ -246,12 +246,12 @@ dmlcommands             ::=     SELECT selectionlist
 selectionlist           ::=     ASTERISCO
                                 | selectionlist2;
 
-selectionlist2          ::=     ID:a COMA selectionlist2
+selectionlist2          ::=     selectionlist2 COMA ID:a
                                 {:
                                     Column columna = new Column (a.getCadena(), 1);
                                     columnasSelect.add(columna);
                                 :}
-                                | aggregatefunctions:a COMA selectionlist2
+                                | selectionlist2 COMA aggregatefunctions:a
                                 {:
                                     columnasSelect.add(a);
                                 :}

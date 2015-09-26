@@ -1,1 +1,1 @@
-SELECT * FROM serpiente
+SELECT nombre,nacimiento FROM serpiente

@@ -54,5 +54,4 @@ public class Register implements Comparable<Register>  {
         return (String) answer.subSequence(0, answer.length()-2);
     }
     
-    
 }

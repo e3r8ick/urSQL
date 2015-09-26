@@ -136,7 +136,7 @@ public class SystemCatalog {
            Document document = (Document) builder.build( File );
            //Se obtiene la raiz 
            Element rootNode = document.getRootElement();
-           System.out.println("Archivo de esquemas cargado");
+           //System.out.println("Archivo de esquemas cargado");
            //Se obtiene la lista de hijos de la raiz 
            List list = rootNode.getChildren();
            //Se recorre la lista de hijos
@@ -145,7 +145,7 @@ public class SystemCatalog {
                //Se obtiene el elemento 
                Element schema = (Element) list.get(j);
                //Se obtiene el atributo que esta en el tag 
-               System.out.println( "Esquema: "+schema.getValue());
+               //System.out.println( "Esquema: "+schema.getValue());
                loadSingleSchema(schema.getValue());
            }
        }catch ( IOException | JDOMException io ) {
@@ -175,8 +175,8 @@ public class SystemCatalog {
                //Se obtiene el elemento 
                Element schema = (Element) list.get(j);
                //Se obtiene el atributo que esta en el tag 
-                   System.out.println(rootNode.getName()+": "+
-                           schema.getName()+","+schema.getValue());
+                   /*System.out.println(rootNode.getName()+": "+
+                           schema.getName()+","+schema.getValue());*/
                    tmp.addTable(new Table(schema.getName(),schema.getValue()));
            }
        }catch ( IOException | JDOMException io ) {

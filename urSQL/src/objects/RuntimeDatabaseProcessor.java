@@ -49,11 +49,16 @@ public class RuntimeDatabaseProcessor {
      * Genera un listado de todos los Schemas existentes
      * @return Lista con los nombres de los esuqemas
      */
-    public void listDatabases ()
+    public List<String> listDatabases ()
     {
-        for(int i = 0; i<getSystemCatalog().getSchemas().size();i++){
-            System.out.println(getSystemCatalog().getSchemas().get(i).getName());
+        List<Schema> list = systemCatalog.getSchemas();
+        List<String> schemesList = new ArrayList<>();
+        for (Schema database : list)
+        {
+            schemesList.add(database.name);
+            System.out.println(database.name);
         }
+        return schemesList;
     }
     
     /**

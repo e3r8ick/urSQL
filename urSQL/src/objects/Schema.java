@@ -28,7 +28,7 @@ public class Schema implements Comparable<Schema> {
     
     protected List<Table> tables;  /* cambiar por una estructura mas eficiente */
     
-    private String name;
+    protected String name;
     
     protected String tablesFile;
     

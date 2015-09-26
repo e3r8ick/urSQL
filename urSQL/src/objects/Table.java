@@ -11,7 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import objects.select.SelectColumn;
+import objects.select.*;
 import org.jdom2.*;
 import ursql.ResultSetNode;
 import utils.Constants;
@@ -281,39 +281,87 @@ public class Table implements utils.Constants, Comparable<Table> {
             }
             rs.printResult();
         }
+        else
+        {
+            List<String> selectColumnNames = new ArrayList<>();
+            for (SelectColumn selectColumn : selectionList) // Construimos el título del ResultSet
+            {
+                if (selectColumn.type == Constants.COLUMN)
+                    selectColumnNames.add(((Column) selectColumn).column);
+                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
+                    selectColumnNames.add(((AggregateFunction) selectColumn).column);
+            }
+            ursql.ResultSet rs = new ursql.ResultSet(selectColumnNames);
+            List<Register> whereResult = selectAll();
+            List<ResultSetNode> resultSetValues = registerListToResultSetNodeList(whereResult,selectionList);
+            for (ResultSetNode node : resultSetValues)
+            {
+                rs.addValue(node);
+            }
+            rs.printResult();
+        }
+    }
+    
+    private List<ResultSetNode> registerListToResultSetNodeList (   List<Register> registerList,
+                                                                    List<SelectColumn> selectionList)
+    {
+        List<ResultSetNode> result = new ArrayList<>();
+        for (Register registro : registerList)
+        {
+            List<String> temporalValue = new ArrayList<>();
+            for (SelectColumn selectColumn : selectionList)
+            {
+                if (selectColumn.type == Constants.COLUMN)
+                {
+                    for (int i=0;i<columnNames.size();i++)
+                    {
+                        if ( ((Column) selectColumn).column.equals(columnNames.get(i)))
+                            temporalValue.add(registro.atributeValues.get(i));
+                    }
+                }
+                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
+                {
+                    /* NOT IMPLEMENTED YET */
+                }
+            }
+            result.add(new ResultSetNode(temporalValue));
+        }
+        return result;
     }
     
     public void select (List<SelectColumn> selectionList,
                         String column, String operator, String value // WHERE statment
                         ) throws Exception
     {
-        List<Register> whereResult = 
-                whereStatment(column, operator, value);
-        
         if (selectionList.isEmpty())
         {
+            ursql.ResultSet rs = new ursql.ResultSet(columnNames);
+            List<Register> whereResult = whereStatment(column, operator, value);
             for (Register registro : whereResult)
             {
-                System.out.println(registro.toString());
+                ursql.ResultSetNode rsn = new ResultSetNode(registro.atributeValues);
+                rs.addValue(rsn);
             }
+            rs.printResult();
         }
         else
         {
-            for (SelectColumn iterator : selectionList)
+            List<String> selectColumnNames = new ArrayList<>();
+            for (SelectColumn selectColumn : selectionList) // Construimos el título del ResultSet
             {
-                System.out.print(iterator + "  -  ");
+                if (selectColumn.type == Constants.COLUMN)
+                    selectColumnNames.add(((Column) selectColumn).column);
+                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
+                    selectColumnNames.add(((AggregateFunction) selectColumn).column);
             }
-            for (Register registro : whereResult)
+            ursql.ResultSet rs = new ursql.ResultSet(selectColumnNames);
+            List<Register> whereResult = whereStatment(column, operator, value);
+            List<ResultSetNode> resultSetValues = registerListToResultSetNodeList(whereResult,selectionList);
+            for (ResultSetNode node : resultSetValues)
             {
-                for (int index = 0;index<columnNames.size();index++)
-                {
-                    if (selectionList.contains(columnNames.get(index)))
-                    {
-                        System.out.print(registro.atributeValues.get(index));
-                    }
-                }
-                System.out.println("");
+                rs.addValue(node);
             }
+            rs.printResult();
         }
     }
     
