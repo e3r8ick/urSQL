@@ -12,6 +12,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
+import utils.Constants;
 
 /**
  * Representación en caliente de una tabla de la base de datos 
@@ -84,8 +85,28 @@ public class Table {
      */
     public void saveTree()
     {
-         System.out.println(registerTree.hashCode());
-         System.out.println((Object)registerTree.getClass().getDeclaredAnnotations());
+         /*for(int i = 0; i<registerTree.size();i++){
+            try {
+            Element tabla = new Element(tables.get(i).name);
+            Document doc = new Document(tabla);
+
+
+            tabla.addContent(new Element("DataFile").setText(tables.get(i).getDataFile()));
+            tabla.addContent(new Element("MetaDataFile").setText(tables.get(i).metadataFile));
+
+
+            XMLOutputter xmlOutput = new XMLOutputter();
+
+            // display nice nice
+            xmlOutput.setFormat(Format.getPrettyFormat());
+            xmlOutput.output(doc, new FileWriter(Constants.TABLES_PATH+name+".xml"));
+
+            System.out.println("Tabla "+name+" salvada");
+          } catch (IOException io) {
+            System.out.println(io.getMessage());
+          }
+        }*/
+         
     }
     
     /**

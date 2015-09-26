@@ -20,24 +20,28 @@ public class UrSQL {
      */
     public static void main(String[] args) throws SchemaAlreadyExistsException, Exception{
         
-        Table tabla = new Table("Tabla1","C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Tablas\\TablaTabla1.xml");
+        RuntimeDatabaseProcessor procesor = new RuntimeDatabaseProcessor();
+        procesor.listDatabases();
+        
+        /*Table tabla = new Table("Tabla1","C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Tablas\\TablaTabla1.xml");
         
         List list = new ArrayList();
         list.add("Erick");
         list.add("Maieytkol");
         list.add("Neeystor");
         List list2 = new ArrayList();
-        list.add("Erick2");
-        list.add("Maiko2l");
-        list.add("Nestor2");
+        list2.add("Erick2");
+        list2.add("Maiko2l");
+        list2.add("Nestor2");
         List list3 = new ArrayList();
-        list.add("E47rick");
-        list.add("Mai74kol");
-        list.add("Nest74or");
+        list3.add("E47rick");
+        list3.add("Mai74kol");
+        list3.add("Nest74or");
         BTree<Register, String> tree = new BTree<>();
         tree.insert(new Register(list,tabla), "Erick");
+        System.out.println(tabla);
         //tree.insert(new Register(list2,tabla), "Juan");
-       // tree.insert(new Register(list3,tabla), "Maikol");
+        //tree.insert(new Register(list3,tabla), "Maikol");
         tabla.saveTree();
         tabla.setRegisterTree(tree);
         tabla.saveTree();

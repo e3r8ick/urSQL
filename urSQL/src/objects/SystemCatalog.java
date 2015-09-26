@@ -32,7 +32,8 @@ public class SystemCatalog {
 
     public SystemCatalog() 
     {
-        schemas = new ArrayList<>();   
+        schemas = new ArrayList<>();  
+        loadSchemas();
     }
     
     public Schema getSchema (String name)
@@ -77,7 +78,7 @@ public class SystemCatalog {
                Element tabla = new Element("SchemasFile");
                Document doc = new Document(tabla);
 
-               tabla.addContent(new Element("SchemaFile").setText((getSchemas().get(i).tablesFile)));
+               tabla.addContent(new Element((getSchemas().get(i)).name).setText((getSchemas().get(i).tablesFile)));
 
                XMLOutputter xmlOutput = new XMLOutputter();
 
@@ -132,6 +133,7 @@ public class SystemCatalog {
            }
        }catch ( IOException | JDOMException io ) {
            System.out.println( io.getMessage() );
+           System.out.println("No hay esquemas para cargar");
        }
     }
     

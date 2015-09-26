@@ -38,6 +38,7 @@ public class Schema implements Comparable<Schema> {
         tables = new ArrayList<>();
         tablesFile = Constants.SCHEMA_PATH+name+".xml";
         /* crear archivo de las tablas */
+        loadTables();
     }
     
     /**
@@ -49,6 +50,7 @@ public class Schema implements Comparable<Schema> {
      */
     public Schema (String name, String tablesFile)
     {
+        this.name = name;
         this.tablesFile = tablesFile;
         tables = new ArrayList<>();
         loadTables();

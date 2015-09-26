@@ -13,8 +13,12 @@ import java.util.List;
  */
 public class RuntimeDatabaseProcessor {
     
-    protected SystemCatalog systemCatalog = new SystemCatalog();
+    private SystemCatalog systemCatalog;
     
+    
+    public RuntimeDatabaseProcessor(){
+        systemCatalog = new SystemCatalog();
+    }
     
     /**
      * Crea un nuevo esquema
@@ -23,7 +27,7 @@ public class RuntimeDatabaseProcessor {
      */
     public void createDatabase (String name) throws Exception
     {
-        systemCatalog.createSchema(name);
+        getSystemCatalog().createSchema(name);
     }
     
     /**
@@ -33,23 +37,18 @@ public class RuntimeDatabaseProcessor {
      */
     public void dropDatabase (String name) throws Exception
     {
-        systemCatalog.deleteSchema(name);
+        getSystemCatalog().deleteSchema(name);
     }
     
     /**
      * Genera un listado de todos los esquemas existentes
      * @return Lista con los nombres de los esuqemas
      */
-    public List<String> listDatabases ()
+    public void listDatabases ()
     {
-        List<Schema> list = systemCatalog.getSchemas();
-        List<String> schemesList = new ArrayList<>();
-        for (Schema database : list)
-        {
-            schemesList.add(database.name);
-            System.out.println(database.name);
+        for(int i = 0; i<getSystemCatalog().getSchemas().size();i++){
+            System.out.println(getSystemCatalog().getSchemas().get(i).name);
         }
-        return schemesList;
     }
     
     /**
@@ -168,6 +167,20 @@ public class RuntimeDatabaseProcessor {
     {
         System.out.println("comando dml insert into completado");
         return 0;
+    }
+
+    /**
+     * @return the systemCatalog
+     */
+    public SystemCatalog getSystemCatalog() {
+        return systemCatalog;
+    }
+
+    /**
+     * @param systemCatalog the systemCatalog to set
+     */
+    public void setSystemCatalog(SystemCatalog systemCatalog) {
+        this.systemCatalog = systemCatalog;
     }
     
 }
