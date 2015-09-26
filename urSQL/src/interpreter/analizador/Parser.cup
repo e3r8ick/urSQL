@@ -8,9 +8,11 @@ import java.util.List;
 import java_cup.runtime.*;
 
 import interpreter.objects.ColumnDefinition;
-import interpreter.objects.Constraint;
-import interpreter.objects.AggregateFunction;
 import interpreter.objects.WhereStatment;
+
+import objects.datatypes.*;
+import objects.constraints.*;
+import objects.select.*;
 
 import objects.RuntimeDatabaseProcessor;
 
@@ -22,6 +24,8 @@ action code {:
 
     public List<String> listaColumnasSelect = new ArrayList<>();
 
+    public List<SelectColumn> columnasSelect = new ArrayList<>();
+
     public List<String> listajoin = new ArrayList<>();
 
     public List<String> listaValuesInsert = new ArrayList<>();
@@ -30,14 +34,6 @@ action code {:
 
 parser code {:
     //esta es la manera en que se puede acceder a un objeto que se genera durante la etapa del parsing
-    
-    public AnalizadorSintactico (   java_cup.runtime.Scanner s, 
-                                    RuntimeDatabaseProcessor rdp)
-    {
-        
-        super(s);
-    }
- 
 
     @Override
     public void syntax_error(Symbol sy) {
@@ -65,22 +61,27 @@ SELECT, FROM, WHERE, GROUP, BY, JOIN, LIKE, IS, COUNT, AVERAGE, MIN, MAX,
 UPDATE, DELETE, INSERT, INTO, VALUES;
 
 
-terminal token NUM, PALABRA, ID;
+terminal token NUM, PALABRA, ID, DEC;
 
 /*-------------------------------NO TERMINALES----------------------------*/
 
 non terminal programa, clpcommands, ddlcommands, dmlcommands, columndefinition,
-columnlist, valueslist, selectionlist, joinstatment, joinstatment2;
+columnlist, valueslist, joinstatment, joinstatment2, value, selectionlist2, 
+selectionlist, valueslist2;
 
 non terminal ColumnDefinition column;
 
-non terminal String primarykey, type, nullability, compareoperator, groupby;
+non terminal String primarykey, nullability, compareoperator, groupby, wherevalues;
 
-non terminal Constraint constraintdefinition;
+non terminal ForeignKey constraintdefinition;
 
 non terminal AggregateFunction aggregatefunctions;
 
 non terminal WhereStatment where;
+
+non terminal DataType type;
+
+precedence left COMA;
 
 /*-------------------------------GRAMATICAS-------------------------------*/
 start with programa;
@@ -134,8 +135,7 @@ ddlcommands             ::=     SET DATABASE ID:a
                                 :}
                                 | ALTER TABLE ID:a ADD CONSTRAINT constraintdefinition:b
                                 {:
-                                    b.name = a.getCadena();
-                                    linkToWorld.alterTable(b);
+                                    linkToWorld.alterTable(a.getCadena(), b);
                                 :}
                                 | DROP TABLE ID:a
                                 {:
@@ -166,26 +166,26 @@ column                  ::=     ID:a type:b nullability:c
 
 type                    ::=     INTEGER
                                 {:
-                                    RESULT = "integer";
+                                    RESULT = new URSQL_Integer();
                                 :}
                                 | DECIMAL ABRIRPAR 
                                     NUM:a COMA NUM:b CERRARPAR
                                 {:
-                                    RESULT =    "decimal:" + 
-                                            String.valueOf(a.getEntero()) + 
-                                            ":" + String.valueOf(b.getEntero());
+                                    RESULT = new URSQL_Decimal(
+                                        a.getEntero(),
+                                        b.getEntero());
                                 :}
                                 | CHAR ABRIRPAR NUM:a CERRARPAR
                                 {:
-                                    RESULT = "char:" + String.valueOf(a.getEntero());
+                                    RESULT = new URSQL_Char(a.getEntero());
                                 :}
                                 | VARCHAR
                                 {:
-                                    RESULT = "varchar";
+                                    RESULT = new URSQL_Varchar();
                                 :}
                                 | DATETIME
                                 {:
-                                    RESULT = "datetime";
+                                    RESULT = new URSQL_Datetime();
                                 :};
 
 nullability             ::=     NULL
@@ -205,37 +205,36 @@ primarykey              ::=     PRIMARY KEY ABRIRPAR ID:a CERRARPAR
 constraintdefinition    ::=     FOREIGN KEY ID:a REFERENCES ID:b 
                                     ABRIRPAR ID:c CERRARPAR
                                 {:
-                                    RESULT = new Constraint (
+                                    RESULT = new ForeignKey (
                                                                 a.getCadena(),
                                                                 b.getCadena(),
                                                                 c.getCadena()
                                                             );
                                 :};
 
-dmlcommands             ::=     SELECT selectionlist COMA aggregatefunctions:b
+dmlcommands             ::=     SELECT selectionlist
                                     FROM ID:c joinstatment where:e groupby:f
                                 {:
-                                    linkToWorld.select( listaColumnasSelect,
-                                                        b,
+                                    linkToWorld.select( columnasSelect,
                                                         c.getCadena(),
                                                         listajoin,
                                                         e,
                                                         f);
                                 :}
                                 | UPDATE ID:a SET ID:b IGUAL PALABRA:c 
-                                    WHERE where:d
+                                    where:d
                                 {:
                                     linkToWorld.update( a.getCadena(),
                                                         b.getCadena(),
                                                         c.getCadena(),d);
                                 :}
                                 | DELETE FROM ID:a 
-                                    WHERE where:b
+                                    where:b
                                 {:
                                     linkToWorld.delete( a.getCadena(),b);
                                 :}
                                 | INSERT INTO ID:a 
-                                    ABRIRPAR ID:b CERRARPAR 
+                                    ABRIRPAR columnlist CERRARPAR 
                                     VALUES ABRIRPAR valueslist CERRARPAR
                                 {:
                                     linkToWorld.insertInto( a.getCadena(),
@@ -245,9 +244,28 @@ dmlcommands             ::=     SELECT selectionlist COMA aggregatefunctions:b
 ;
 
 selectionlist           ::=     ASTERISCO
-                                | columnlist;
+                                | selectionlist2;
 
-columnlist              ::=     columnlist ID:a
+selectionlist2          ::=     ID:a COMA selectionlist2
+                                {:
+                                    Column columna = new Column (a.getCadena(), 1);
+                                    columnasSelect.add(columna);
+                                :}
+                                | aggregatefunctions:a COMA selectionlist2
+                                {:
+                                    columnasSelect.add(a);
+                                :}
+                                | ID:a
+                                {:
+                                    Column columna = new Column (a.getCadena(), 1);
+                                    columnasSelect.add(columna);
+                                :}
+                                | aggregatefunctions:a
+                                {:
+                                    columnasSelect.add(a);
+                                :};
+
+columnlist              ::=     columnlist COMA ID:a
                                 {:
                                     listaColumnasSelect.add(a.getCadena());
                                 :}
@@ -256,34 +274,47 @@ columnlist              ::=     columnlist ID:a
                                     listaColumnasSelect.add(a.getCadena());
                                 :};
 
-valueslist              ::=     valueslist ID:a
+valueslist              ::=     value valueslist2;
+
+valueslist2             ::=     COMA valueslist
+                                | ;
+
+value                  ::=      ID:a
                                 {:
                                     listaValuesInsert.add(a.getCadena());
                                 :}
-                                | ID:a
+                                | PALABRA:a
+                                {:
+                                    listaValuesInsert.add(a.getCadena().replaceAll("\"", ""));
+                                :}
+                                | NUM:a
                                 {:
                                     listaValuesInsert.add(a.getCadena());
                                 :};
 
 aggregatefunctions      ::=     COUNT ABRIRPAR ID:a CERRARPAR
                                 {:
-                                    RESULT = new AggregateFunction("COUNT", a.getCadena());
+                                    AggregateFunction function = new 
+                                        AggregateFunction (a.getCadena(), 1, 2);
+                                    RESULT = function;
                                 :}
                                 | AVERAGE ABRIRPAR ID:a CERRARPAR
                                 {:
-                                    RESULT = new AggregateFunction("AVERAGE", a.getCadena());
+                                    AggregateFunction function = new 
+                                        AggregateFunction (a.getCadena(), 2, 2);
+                                    RESULT = function;
                                 :}
                                 | MIN ABRIRPAR ID:a CERRARPAR
                                 {:
-                                    RESULT = new AggregateFunction("MIN", a.getCadena());
+                                    AggregateFunction function = new 
+                                        AggregateFunction (a.getCadena(), 3, 2);
+                                    RESULT = function;
                                 :}
                                 | MAX ABRIRPAR ID:a CERRARPAR
                                 {:
-                                    RESULT = new AggregateFunction("MAX", a.getCadena());
-                                :}
-                                |
-                                {:
-                                    RESULT = null;
+                                    AggregateFunction function = new 
+                                        AggregateFunction (a.getCadena(), 4, 2);
+                                    RESULT = function;
                                 :};
 
 joinstatment            ::=     joinstatment2
@@ -298,44 +329,61 @@ joinstatment2           ::=     joinstatment2 JOIN ID:b
                                     listajoin.add(a.getCadena());
                                 :};
 
-where                   ::=     WHERE ID:a compareoperator:b PALABRA:c
+where                   ::=     WHERE ID:a compareoperator:b wherevalues:c
                                 {:
                                     RESULT = new WhereStatment (  a.getCadena(),
                                                                 b, 
-                                                                c.getCadena());
+                                                                c);
                                 :}
                                 |
                                 {:
                                     RESULT = null;
                                 :};
 
+wherevalues             ::=     ID:a
+                                {:
+                                    RESULT = a.getCadena();
+                                :}
+                                | PALABRA:a
+                                {:
+                                    RESULT = a.getCadena().replaceAll("\"", "");
+                                :}
+                                | NUM:a
+                                {:
+                                    RESULT = a.getCadena();
+                                :}
+                                | DEC:a
+                                {:
+                                    RESULT = a.getCadena();
+                                :};
+
 compareoperator         ::=     MAYOR
                                 {:
-                                    RESULT = "MAYOR";
+                                    RESULT = ">";
                                 :}
                                 | MENOR
                                 {:
-                                    RESULT = "MENOR";
+                                    RESULT = "<";
                                 :}
                                 | IGUAL
                                 {:
-                                    RESULT = "IGUAL";
+                                    RESULT = "=";
                                 :}
                                 | LIKE
                                 {:
-                                    RESULT = "LIKE";
+                                    RESULT = "like";
                                 :}
                                 | NOT
                                 {:
-                                    RESULT = "NOT";
+                                    RESULT = "not";
                                 :}
                                 | IS NULL
                                 {:
-                                    RESULT = "ISNULL";
+                                    RESULT = "is null";
                                 :}
                                 | IS NOT NULL
                                 {:
-                                    RESULT = "ISNOTNULL";
+                                    RESULT = "is not null";
                                 :};
 
 groupby                 ::=     GROUP BY ID:a

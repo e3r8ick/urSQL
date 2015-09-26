@@ -1,1 +1,1 @@
-LIST DATABASES
+SELECT * FROM serpiente

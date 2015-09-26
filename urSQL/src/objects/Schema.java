@@ -1,11 +1,15 @@
 package objects;
 
+import exceptions.TableAlreadyExistsException;
+import exceptions.TableDoesntExistsException;
+import interpreter.objects.ColumnDefinition;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import objects.constraints.Constraint;
+import objects.constraints.ForeignKey;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -73,16 +77,46 @@ public class Schema implements Comparable<Schema> {
      * @param constraints Constraints iniciales de la tabla
      */
     public void createTable (   String name, 
-                                List<String> columnNames, 
-                                List<Integer> columnTypes,
-                                List<Integer> columnSizes, 
-                                List<Constraint> constraints)
+                                String primaryKey, 
+                                List<ColumnDefinition> columns) throws Exception
     {
-        tables.add(new Table (  name, 
-                                columnNames, 
-                                columnTypes, 
-                                columnSizes,
-                                constraints));
+        Table newTable = new Table(name, primaryKey, columns);
+        newTable.dataFile = utils.Constants.DATOS + this.name + File.separator + name;
+        if (tables.contains(newTable))
+        {
+            throw new exceptions.TableAlreadyExistsException();
+        }
+        else
+        {
+            tables.add(newTable);
+        }
+    }
+    
+    public void deleteTable (String name) throws Exception
+    {
+        Table newTable = new Table(name);
+        if (!tables.contains(newTable))
+        {
+            throw new exceptions.TableDoesntExistsException();
+        }
+        else
+        {
+            for (Table tabla : tables)
+            {
+                for (Constraint constraint : tabla.constraints)
+                {
+                    if (constraint.type == Constants.FOREIGN_KEY)
+                    {
+                        /* Revisamos que ninguna otra tabla haga refeencia a la que queremos borrar */
+                        if ( ((ForeignKey) constraint).referencedTable.equalsIgnoreCase(name) )
+                        {
+                            throw new exceptions.ForeignKeyExistsException(tabla.name);
+                        }
+                    }
+                }
+            }
+            tables.remove(newTable);
+        }
     }
     
     /**
@@ -90,20 +124,23 @@ public class Schema implements Comparable<Schema> {
      * @param name Nombre de la tabla que se busca
      * @return Tabla que se busca
      */
-    public Table getTable (String name)
+    public Table getTable (String name) throws Exception
     {
-        Table tmp = tables.get(0);
-        for(int i = 0; i<tables.size();i++){
-            if(tables.get(i).name.equals(name)){
-                System.out.println(tables.get(i));
-                tmp =tables.get(i);
-                break;
-            }
+        Table newTable = new Table(name);
+        if (!tables.contains(newTable))
+        {
+            throw new exceptions.TableDoesntExistsException();
         }
-        if(!(tmp.name.equals(name))){
-            System.out.println("Tabla no encontrado");
+        else
+        {
+            int index = tables.indexOf(newTable);
+            return tables.get(index);
         }
-        return tmp;
+    }
+    
+    public List<Table> getTables ()
+    {
+        return tables;
     }
     
     /**

@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.Scanner;
 
 /**
+ * Interprete de línea de comandos
  * @author maikol_beto
  */
 public class interpreterTester {

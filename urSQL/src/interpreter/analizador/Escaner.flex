@@ -15,8 +15,9 @@ import java_cup.runtime.Symbol;
 LineTerminator = \r|\n|\r\n|\n\r
 WhiteSpace = {LineTerminator} | [ \t\f]
 ValorEntero = [0-9][0-9]*
+ValorDecimal = [0-9]*"."[0-9]*
 Id = ([a-zA-Z"_"]) ([a-zA-Z0-9]){0,31}
-Palabra = \" [a-zA-Z0-9" "]+ \"
+Palabra = \" [":""/"a-zA-Z0-9" "]+ \"
 
 %%
 /* OPERADORES Y SIGNOS */
@@ -83,8 +84,8 @@ Palabra = \" [a-zA-Z0-9" "]+ \"
 
 /* EXPRESIONES */
 {ValorEntero}   {return new Symbol(sym.NUM, new token(yycolumn, yyline, yytext()));}
+{ValorDecimal}  {return new Symbol(sym.DEC, new token(yycolumn, yyline, yytext()));}
 {Palabra}       {return new Symbol(sym.PALABRA, new token(yycolumn, yyline, yytext()));}
 {Id}            {return new Symbol(sym.ID, new token(yycolumn, yyline, yytext()));}
-{LineTerminator} {return new Symbol(sym.NEWLINE, new token(yycolumn, yyline, yytext()));}
 {WhiteSpace}    {/* ignorar */}
 .               {System.err.println("caracter invalido" + yytext() + "["+ yyline + ":"+ yycolumn + "]");}
