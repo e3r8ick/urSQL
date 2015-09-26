@@ -33,4 +33,8 @@ public interface Constants {
     
     public final String DATOS = "Metadata/Datos/";
     
+    public final String SCHEMA_PATH = "Metadata/Esquemas/Esquema";
+    public final String TABLES_PATH = "Metadata/Tablas/Tabla";
+    public final String SCHEMAS_FILE = "Metadata/schemasFile.xml";
+    
 }

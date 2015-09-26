@@ -40,8 +40,9 @@ public class Schema implements Comparable<Schema> {
     {
         this.name = name;
         tables = new ArrayList<>();
-        tablesFile = "C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Esquemas\\Esquema"+name+".xml";
+        tablesFile = Constants.SCHEMA_PATH+name+".xml";
         /* crear archivo de las tablas */
+        loadTables();
     }
     
     /**
@@ -53,6 +54,7 @@ public class Schema implements Comparable<Schema> {
      */
     public Schema (String name, String tablesFile)
     {
+        this.name = name;
         this.tablesFile = tablesFile;
         tables = new ArrayList<>();
         loadTables();
@@ -143,7 +145,7 @@ public class Schema implements Comparable<Schema> {
         for(int i = 0; i<tables.size();i++){
             //Se crea un SAXBuilder para poder parsear el archivo
            SAXBuilder builder = new SAXBuilder();
-           File File = new File( tables.get(i).getDataFile() );
+           File File = new File( tables.get(i).metadataFile );
            try
            {
                //Se crea el documento a traves del archivo
@@ -190,7 +192,7 @@ public class Schema implements Comparable<Schema> {
     public void saveTables(){
         for(int i = 0; i<tables.size();i++){
             try {
-            Element tabla = new Element(name);
+            Element tabla = new Element(tables.get(i).name);
             Document doc = new Document(tabla);
 
 
@@ -202,7 +204,7 @@ public class Schema implements Comparable<Schema> {
 
             // display nice nice
             xmlOutput.setFormat(Format.getPrettyFormat());
-            xmlOutput.output(doc, new FileWriter("C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Tablas\\Tabla"+name+".xml"));
+            xmlOutput.output(doc, new FileWriter(Constants.TABLES_PATH+name+".xml"));
 
             System.out.println("Tabla "+name+" salvada");
           } catch (IOException io) {

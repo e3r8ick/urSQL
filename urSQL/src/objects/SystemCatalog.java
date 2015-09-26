@@ -13,6 +13,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
+import utils.Constants;
 
 /**
  * 
@@ -28,12 +29,11 @@ public class SystemCatalog {
     private List<Schema> schemas; /* cambiar ésta estructura por otra mas eficiente */
     
     /* IMPORTANTE: falta implementar el plan de la base de datos */
-    
-    protected final String schemasFile = "metadata/schemasFile.xml";
 
     public SystemCatalog() 
     {
-        schemas = new ArrayList<>();   
+        schemas = new ArrayList<>();  
+        loadSchemas();
     }
     
     public Schema getSchema (String name) throws SchemaDoesntExistsException
@@ -85,37 +85,53 @@ public class SystemCatalog {
      * 
      */
     public void saveSchemas(){
-        for(int i = 0; i<getSchemas().size();i++)
+        for(int i = 0; i<getSchemas().size();i++){
             try {
-               Element tabla = new Element(getSchemas().get(i).name);
+               Element tabla = new Element("SchemasFile");
                Document doc = new Document(tabla);
 
-               for(int j = 0; j < getSchemas().get(j).tables.size();j++){
-               tabla.addContent(new Element("DataFile").setText(((Table)getSchemas().get(j).tables.get(i)).getDataFile()));
-               }
+               tabla.addContent(new Element((getSchemas().get(i)).name).setText((getSchemas().get(i).tablesFile)));
 
                XMLOutputter xmlOutput = new XMLOutputter();
 
                xmlOutput.setFormat(Format.getPrettyFormat());
-               xmlOutput.output(doc, new FileWriter("C:\\Users\\Erick\\Documents\\MasNetBeansProjects\\urSQL\\urSQL\\urSQL\\Metadata\\Esquemas\\Esquema"+getSchemas().get(i).name+".xml"));
+               xmlOutput.output(doc, new FileWriter(Constants.SCHEMAS_FILE));
 
                System.out.println("Esquema "+getSchemas().get(i).name+" Salvado");
          } catch (IOException io) {
            System.out.println(io.getMessage());
          }
+        }
+        for(int i = 0; i<getSchemas().size();i++){
+            try {
+               Element tabla = new Element(getSchemas().get(i).name);
+               Document doc = new Document(tabla);
+
+               tabla.addContent(new Element("TableFile").setText((getSchemas().get(i).tablesFile)));
+
+               XMLOutputter xmlOutput = new XMLOutputter();
+
+               xmlOutput.setFormat(Format.getPrettyFormat());
+               xmlOutput.output(doc, new FileWriter(Constants.SCHEMAS_FILE));
+
+               System.out.println("Esquema "+getSchemas().get(i).name+" Salvado");
+         } catch (IOException io) {
+           System.out.println(io.getMessage());
+         }
+        }
     }
 
     public void loadSchemas(){
     //Se crea un SAXBuilder para poder parsear el archivo
        SAXBuilder builder = new SAXBuilder();
-       File File = new File( schemasFile );
+       File File = new File( Constants.SCHEMAS_FILE );
        try
        {
            //Se crea el documento a traves del archivo
            Document document = (Document) builder.build( File );
            //Se obtiene la raiz 
            Element rootNode = document.getRootElement();
-           System.out.println("Base de datos cargada");
+           System.out.println("Archivo de esquemas cargado");
            //Se obtiene la lista de hijos de la raiz 
            List list = rootNode.getChildren();
            //Se recorre la lista de hijos
@@ -124,11 +140,12 @@ public class SystemCatalog {
                //Se obtiene el elemento 
                Element schema = (Element) list.get(j);
                //Se obtiene el atributo que esta en el tag 
-                  System.out.println( "Esquema: "+schema.getValue());
-                  loadSingleSchema(schema.getValue());
+               System.out.println( "Esquema: "+schema.getValue());
+               loadSingleSchema(schema.getValue());
            }
        }catch ( IOException | JDOMException io ) {
            System.out.println( io.getMessage() );
+           System.out.println("No hay esquemas para cargar");
        }
     }
     
@@ -151,7 +168,7 @@ public class SystemCatalog {
                //Se obtiene el elemento 
                Element schema = (Element) list.get(j);
                //Se obtiene el atributo que esta en el tag 
-                   System.out.println("Esquemall: "+schema.getName()+","+schema.getValue());
+                   System.out.println("Esquema: "+schema.getName()+","+schema.getValue());
                    schemas.add(new Schema(schema.getName(),schema.getValue()));
            }
        }catch ( IOException | JDOMException io ) {

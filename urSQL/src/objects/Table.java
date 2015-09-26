@@ -110,6 +110,7 @@ public class Table implements utils.Constants, Comparable<Table> {
     {
         this.name = name;
         this.metadataFile = metadataFile;
+        registerTree = new BTree();
     }
     
     /**
@@ -118,6 +119,27 @@ public class Table implements utils.Constants, Comparable<Table> {
      */
     public void saveTree()
     {
+         /*for(int i = 0; i<registerTree.size();i++){
+            try {
+            Element tabla = new Element(tables.get(i).name);
+            Document doc = new Document(tabla);
+
+
+            tabla.addContent(new Element("DataFile").setText(tables.get(i).getDataFile()));
+            tabla.addContent(new Element("MetaDataFile").setText(tables.get(i).metadataFile));
+
+
+            XMLOutputter xmlOutput = new XMLOutputter();
+
+            // display nice nice
+            xmlOutput.setFormat(Format.getPrettyFormat());
+            xmlOutput.output(doc, new FileWriter(Constants.TABLES_PATH+name+".xml"));
+
+            System.out.println("Tabla "+name+" salvada");
+          } catch (IOException io) {
+            System.out.println(io.getMessage());
+          }
+        }*/
          
     }
     
@@ -131,16 +153,6 @@ public class Table implements utils.Constants, Comparable<Table> {
         
     }
     
-    /**
-     * Guarda la tabla en disco
-     */
-    public void saveTable(){
-       
-    }
-    
-    public void loadTable(String xmlFile){
-       
-    }
             
     public void createConstraint (Constraint constraint, Table referencedTable) throws Exception
     {
@@ -187,6 +199,20 @@ public class Table implements utils.Constants, Comparable<Table> {
      */
     public void setDataFile(String dataFile) {
         this.dataFile = dataFile;
+    }
+
+    /**
+     * @return the registerTree
+     */
+    public bplustree.BTree<Register, String> getRegisterTree() {
+        return registerTree;
+    }
+
+    /**
+     * @param registerTree the registerTree to set
+     */
+    public void setRegisterTree(bplustree.BTree<Register, String> registerTree) {
+        this.registerTree = registerTree;
     }
     
     public void insertRegister (List<String> columns, List<String> values) throws Exception
