@@ -204,14 +204,14 @@ public class Table implements utils.Constants, Comparable<Table> {
     /**
      * @return the registerTree
      */
-    public bplustree.BTree<Register, String> getRegisterTree() {
+    public bplustree.BTree<String, Register> getRegisterTree() {
         return registerTree;
     }
 
     /**
      * @param registerTree the registerTree to set
      */
-    public void setRegisterTree(bplustree.BTree<Register, String> registerTree) {
+    public void setRegisterTree(bplustree.BTree<String, Register> registerTree) {
         this.registerTree = registerTree;
     }
     
