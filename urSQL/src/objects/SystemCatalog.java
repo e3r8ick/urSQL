@@ -36,7 +36,9 @@ public class SystemCatalog {
         loadSchemas();
     }
     
-    public Schema getSchema (String name){
+    
+    public Schema getSchema (String name)
+    {
         Schema tmp = schemas.get(0);
         for(int i = 0; i<schemas.size();i++){
             if(schemas.get(i).getName().equals(name)){

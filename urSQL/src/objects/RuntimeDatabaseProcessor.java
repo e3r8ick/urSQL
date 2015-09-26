@@ -69,7 +69,7 @@ public class RuntimeDatabaseProcessor {
         for (Schema database : list)
         {
             String reportline = "";
-            reportline += "El Scheme: " + database.name + " contiene las siguientes tablas:\n";
+            reportline += "El Scheme: " + database.getName() + " contiene las siguientes tablas:\n";
             for (Table tabla : database.getTables())
             {
                 reportline += "   - " + tabla.name + "\n";
