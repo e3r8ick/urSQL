@@ -32,7 +32,9 @@ public class Schema implements Comparable<Schema> {
     
     protected String name;
     
-    protected String tablesFile;
+    protected String schemaFile;
+    
+    private String tableFile;
     
     /**
      * Crea un esquema que ya existia
@@ -51,7 +53,7 @@ public class Schema implements Comparable<Schema> {
     public Schema(String name){
         this.name = name;
         tables = new ArrayList<>();
-        tablesFile = Constants.SCHEMA_PATH+name+".xml";
+        schemaFile = Constants.SCHEMA_PATH+name+".xml"; loadTables();
     }
     
     /**
@@ -64,7 +66,7 @@ public class Schema implements Comparable<Schema> {
     public Schema (String name, String tablesFile)
     {
         this.name = name;
-        this.tablesFile = tablesFile;
+        this.schemaFile = tablesFile;
         tables = new ArrayList<>();
         loadTables();
         
@@ -92,6 +94,7 @@ public class Schema implements Comparable<Schema> {
         {
             tables.add(newTable);
         }
+        loadTables();
     }
     
     public void deleteTable (String name) throws Exception
@@ -166,6 +169,7 @@ public class Schema implements Comparable<Schema> {
                //Se obtiene la lista de hijos de la raiz 
                List list = rootNode.getChildren();
                //Se recorre la lista de hijos
+               Table tmp;
                for ( int j = 0; j < list.size(); j++ )
                {
                    //Se obtiene el elemento 
@@ -173,20 +177,11 @@ public class Schema implements Comparable<Schema> {
                    //Se obtiene el atributo que esta en el tag 
                   // List list2 = tabla.getChildren();
                    //for(int k = 0; k < list2.size();k++){
+                    setTableFile(tabla.getValue());
                        System.out.println( "TablaInfo: "+tabla.getValue());
-                       //Se obtiene la lista de hijos del tag 
-                       List lista_campos = tabla.getChildren();
-                       //Se recorre la lista de campos
-                      /*for ( int j = 0; j < lista_campos.size(); j++ )
-                       {
-                           System.out.print( "\t"+((Element)lista_campos.get(j)).getName()
-                           +": ");
-                           //Se obtiene el elemento 
-                           Element campo = (Element)lista_campos.get( j );
-                           String valor = campo.getValue();
-                           System.out.print(valor);
-                           System.out.println("");
-                   }*/
+                       tmp = new Table(tables.get(i).name);
+                       tables.add(tmp);
+                     // saveTree();
                }
            }catch ( IOException | JDOMException io ) {
                System.out.println( io.getMessage() );
@@ -231,7 +226,7 @@ public class Schema implements Comparable<Schema> {
     }
     
     public void dropSchema(){
-        File xmlFile = new File( tablesFile );
+        File xmlFile = new File( schemaFile );
         xmlFile.delete();
         System.out.println("Esquema Borrado");
     }
@@ -315,6 +310,20 @@ public class Schema implements Comparable<Schema> {
      */
     public void setName(String name) {
         this.name = name;
+    }
+    
+    /**
+     * @return the tableFile
+     */
+    public String getTableFile() {
+        return tableFile;
+    }
+
+    /**
+     * @param tableFile the tableFile to set
+     */
+    public void setTableFile(String tableFile) {
+        this.tableFile = tableFile;
     }
     
 }

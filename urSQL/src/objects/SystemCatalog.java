@@ -68,6 +68,21 @@ public class SystemCatalog {
         }
     }
     
+    public void createSchema(String name,String tableFile) throws SchemaAlreadyExistsException{
+         Schema newSchema = new Schema(name);
+         newSchema.setTableFile(tableFile);
+        if (schemas.contains(newSchema))
+        {
+            throw new exceptions.SchemaAlreadyExistsException();
+        }
+        else
+        {
+            schemas.add(newSchema);
+            File directorio = new File(utils.Constants.DATOS + name);
+            directorio.mkdir();
+        }
+    }
+    
     public void deleteSchema (String name) throws SchemaDoesntExistsException
     {
         Schema newSchema = new Schema(name);
@@ -91,7 +106,7 @@ public class SystemCatalog {
         Document doc = new Document(schemasList);
         for(int i = 0; i<getSchemas().size();i++){
             try {
-               schemasList.addContent(new Element((getSchemas().get(i)).getName()).setText((getSchemas().get(i).tablesFile)));
+               schemasList.addContent(new Element((getSchemas().get(i)).getName()).setText((getSchemas().get(i).schemaFile)));
                
                XMLOutputter xmlOutput = new XMLOutputter();
 
@@ -112,7 +127,7 @@ public class SystemCatalog {
                Element tabla = new Element(getSchemas().get(i).getName());
                Document doc2 = new Document(tabla);
 
-               tabla.addContent(new Element("TableFile").setText((getSchemas().get(i).tablesFile)));
+               tabla.addContent(new Element("TableFile").setText((getSchemas().get(i).getTableFile())));
 
                XMLOutputter xmlOutput2 = new XMLOutputter();
 
@@ -174,10 +189,12 @@ public class SystemCatalog {
                //Se obtiene el elemento 
                Element schema = (Element) list.get(j);
                //Se obtiene el atributo que esta en el tag 
+                tmp.addTable(new Table(schema.getName(),schema.getValue(),schema.getValue()));
+                tmp.setTableFile(schema.getValue());
                    /*System.out.println(rootNode.getName()+": "+
                            schema.getName()+","+schema.getValue());*/
-                   tmp.addTable(new Table(schema.getName(),schema.getValue()));
            }
+           tmp.loadTables();
        }catch ( IOException | JDOMException io ) {
            System.out.println( io.getMessage() );
        }

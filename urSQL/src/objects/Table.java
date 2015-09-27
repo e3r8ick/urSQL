@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 import objects.select.*;
 import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import ursql.ResultSet;
 import ursql.ResultSetNode;
 import utils.Constants;
@@ -102,6 +105,20 @@ public class Table implements utils.Constants, Comparable<Table> {
     public Table (String name)
     {
         this.name = name;
+        metadataFile =" ";
+    }
+    
+    /**
+     * 
+     * @param name
+     * @param metadata
+     * @param XmlArbol 
+     */
+    public Table (String name,String metadata, String XmlArbol)
+    {
+        this.name = name;
+        this.metadataFile = metadata;
+        loadTree(XmlArbol);
     }
     
     /**
@@ -123,29 +140,27 @@ public class Table implements utils.Constants, Comparable<Table> {
      */
     public void saveTree()
     {
-        registerTree.toString();
-        /* for(int i = 0; i<registerTree;i++){
+        List list = selectAll();
+        for(int i = 0; i<list.size();i++){
             try {
-            Element tabla = new Element(tables.get(i).name);
-            Document doc = new Document(tabla);
+            Element arbol = new Element(((Register)list.get(i)).primaryKey.toString());
+            Document doc = new Document(arbol);
 
 
-            tabla.addContent(new Element("DataFile").setText(tables.get(i).getDataFile()));
-            tabla.addContent(new Element("MetaDataFile").setText(tables.get(i).metadataFile));
+            arbol.addContent(new Element("Data").setText(((Register)list.get(i)).primaryKey.toString()));
 
 
             XMLOutputter xmlOutput = new XMLOutputter();
 
             // display nice nice
             xmlOutput.setFormat(Format.getPrettyFormat());
-            xmlOutput.output(doc, new FileWriter(Constants.TABLES_PATH+name+".xml"));
+            xmlOutput.output(doc, new FileWriter(Constants.DATOS+name+".xml"));
 
-            System.out.println("Tabla "+name+" salvada");
+            System.out.println("Arbol "+name+" salvado");
           } catch (IOException io) {
             System.out.println(io.getMessage());
           }
-        }*/
-         
+        }
     }
     
     /**
@@ -155,7 +170,30 @@ public class Table implements utils.Constants, Comparable<Table> {
      */
     public void loadTree(String xmlFile)
     {
-        
+         //Se crea un SAXBuilder para poder parsear el archivo
+       SAXBuilder builder = new SAXBuilder();
+       File File = new File( Constants.DATOS );
+       try
+       {
+           //Se crea el documento a traves del archivo
+           Document document = (Document) builder.build( File );
+           //Se obtiene la raiz 
+           Element rootNode = document.getRootElement();
+           //System.out.println("Archivo de esquemas cargado");
+           //Se obtiene la lista de hijos de la raiz 
+           List list = rootNode.getChildren();
+           //Se recorre la lista de hijos
+           for ( int j = 0; j < list.size(); j++ )
+           {
+               //Se obtiene el elemento 
+               Element tabla = (Element) list.get(j);
+               //Se obtiene el atributo que esta en el tag 
+               //System.out.println( "Esquema: "+schema.getValue());
+           }
+       }catch ( IOException | JDOMException io ) {
+           System.out.println( io.getMessage() );
+           System.out.println("No hay esquemas para cargar");
+       }
     }
     
             
