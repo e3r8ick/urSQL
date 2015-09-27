@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import objects.select.*;
 import org.jdom2.*;
+import ursql.ResultSet;
 import ursql.ResultSetNode;
 import utils.Constants;
 import utils.Convert;
@@ -284,117 +285,6 @@ public class Table implements utils.Constants, Comparable<Table> {
 
     }
     
-    /**
-     * SELECT solamente con los nombres de las columnas que se desean mostrar y 
-     * el nombre de la tabla ej: SELECT * FROM tableName
-     * @param selectionList columnas que deseamos mostrar en la respuesta del 
-     * SELECT
-     */
-    public void select (List<SelectColumn> selectionList)
-    {
-        if (selectionList.isEmpty())
-        {
-            ursql.ResultSet rs = new ursql.ResultSet(columnNames);
-            List<Register> whereResult = selectAll();
-            for (Register registro : whereResult)
-            {
-                ursql.ResultSetNode rsn = new ResultSetNode(registro.atributeValues);
-                rs.addValue(rsn);
-            }
-            rs.printResult();
-        }
-        else
-        {
-            List<String> selectColumnNames = new ArrayList<>();
-            for (SelectColumn selectColumn : selectionList) // Construimos el título del ResultSet
-            {
-                if (selectColumn.type == Constants.COLUMN)
-                    selectColumnNames.add(((Column) selectColumn).column);
-                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
-                    selectColumnNames.add(((AggregateFunction) selectColumn).column);
-            }
-            ursql.ResultSet rs = new ursql.ResultSet(selectColumnNames);
-            List<Register> whereResult = selectAll();
-            List<ResultSetNode> resultSetValues = registerListToResultSetNodeList(whereResult,selectionList);
-            for (ResultSetNode node : resultSetValues)
-            {
-                rs.addValue(node);
-            }
-            rs.printResult();
-        }
-    }
-    
-    public void select (List<SelectColumn> selectionList, List<Register> joinResult)
-    {
-        if (selectionList.isEmpty())
-        {
-            ursql.ResultSet rs = new ursql.ResultSet(columnNames);
-            List<Register> whereResult = joinResult;
-            for (Register registro : whereResult)
-            {
-                ursql.ResultSetNode rsn = new ResultSetNode(registro.atributeValues);
-                rs.addValue(rsn);
-            }
-            rs.printResult();
-        }
-        else
-        {
-            List<String> selectColumnNames = new ArrayList<>();
-            for (SelectColumn selectColumn : selectionList) // Construimos el título del ResultSet
-            {
-                if (selectColumn.type == Constants.COLUMN)
-                    selectColumnNames.add(((Column) selectColumn).column);
-                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
-                    selectColumnNames.add(((AggregateFunction) selectColumn).column);
-            }
-            ursql.ResultSet rs = new ursql.ResultSet(selectColumnNames);
-            List<Register> whereResult = joinResult;
-            List<ResultSetNode> resultSetValues = registerListToResultSetNodeList(whereResult,selectionList);
-            for (ResultSetNode node : resultSetValues)
-            {
-                rs.addValue(node);
-            }
-            rs.printResult();
-        }
-    }
-    
-    
-    public void select (List<SelectColumn> selectionList,
-                        String column, String operator, String value // WHERE statment
-                        ) throws Exception
-    {
-        if (selectionList.isEmpty())
-        {
-            ursql.ResultSet rs = new ursql.ResultSet(columnNames);
-            List<Register> whereResult = whereStatment(column, operator, value);
-            for (Register registro : whereResult)
-            {
-                ursql.ResultSetNode rsn = new ResultSetNode(registro.atributeValues);
-                rs.addValue(rsn);
-            }
-            rs.printResult();
-        }
-        else
-        {
-            List<String> selectColumnNames = new ArrayList<>();
-            for (SelectColumn selectColumn : selectionList) // Construimos el título del ResultSet
-            {
-                if (selectColumn.type == Constants.COLUMN)
-                    selectColumnNames.add(((Column) selectColumn).column);
-                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
-                    selectColumnNames.add(((AggregateFunction) selectColumn).column);
-            }
-            ursql.ResultSet rs = new ursql.ResultSet(selectColumnNames);
-            List<Register> whereResult = whereStatment(column, operator, value);
-            List<ResultSetNode> resultSetValues = registerListToResultSetNodeList(whereResult,selectionList);
-            for (ResultSetNode node : resultSetValues)
-            {
-                rs.addValue(node);
-            }
-            rs.printResult();
-        }
-    }
-    
     protected List<Register> selectAll ()
     {
         List<Register> respuesta = new ArrayList<>();
@@ -481,14 +371,12 @@ public class Table implements utils.Constants, Comparable<Table> {
             registerTree.delete(registro.primaryKey);
         }
     }
-    
-    
+        
     @Override
     public int compareTo(Table o) {
         return this.name.compareTo(o.name);
     }
-    
-    
+        
     @Override
     public boolean equals (Object o)
     {
@@ -611,10 +499,10 @@ public class Table implements utils.Constants, Comparable<Table> {
     
     /* SELECT FINAL */
     
-    public void select (List<SelectColumn> selectionList,
-                        List<Register> joinResult,
-                        String column, String operator, String value, // WHERE statment
-                        String groupingColumns) throws Exception
+    public ResultSet select (   List<SelectColumn> selectionList,
+                                List<Register> joinResult,
+                                String column, String operator, String value, // WHERE statment
+                                String groupingColumns) throws Exception
     {
         /* Conjunto de Registros antes del WHERE, GROUP BY y el SELECT */
         List<Register> initialRegisters = new ArrayList<>();
@@ -677,15 +565,15 @@ public class Table implements utils.Constants, Comparable<Table> {
         }
         
         /* SELECT */
+        ursql.ResultSet rs;
         if (selectionList.isEmpty())
         {
-            ursql.ResultSet rs = new ursql.ResultSet(columnNames);
+            rs = new ursql.ResultSet(columnNames);
             for (Register registro : initialRegisters)
             {
                 ursql.ResultSetNode rsn = new ResultSetNode(registro.atributeValues);
                 rs.addValue(rsn);
             }
-            rs.printResult();
         }
         else
         {
@@ -697,7 +585,7 @@ public class Table implements utils.Constants, Comparable<Table> {
                 else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
                     selectColumnNames.add(((AggregateFunction) selectColumn).toString());
             }
-            ursql.ResultSet rs = new ursql.ResultSet(selectColumnNames);
+            rs = new ursql.ResultSet(selectColumnNames);
             
             List<ResultSetNode> resultSetValues = new ArrayList<>();
             
@@ -715,8 +603,8 @@ public class Table implements utils.Constants, Comparable<Table> {
             {
                 rs.addValue(node);
             }
-            rs.printResult();
         }
+        return rs;
     }
     
     private List<ResultSetNode> registerListToResultSetNodeList (   List<Register> registerList,

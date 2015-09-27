@@ -4,9 +4,13 @@ import exceptions.*;
 import interpreter.objects.*;
 import objects.constraints.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import objects.select.JoinObject;
 import objects.select.SelectColumn;
+import ursql.ResultSet;
+import ursql.ResultSetDisplay;
+import ursql.ResultSetNode;
 import utils.Constants;
 
 /**
@@ -21,6 +25,13 @@ public class RuntimeDatabaseProcessor {
     
     protected Schema actualSchema;
     
+    public String result;
+    
+    public List<String> resultList;
+    
+    public int errorCode; // 0 no errors, 1 empty message, -1 error
+    
+    public ResultSet selectAnswer;
     
     public RuntimeDatabaseProcessor(){
         systemCatalog = new SystemCatalog();
@@ -33,7 +44,9 @@ public class RuntimeDatabaseProcessor {
      */
     public void createDatabase (String name) throws Exception
     {
+        errorCode = -1;
         getSystemCatalog().createSchema(name);
+        errorCode = 0;
     }
     
     /**
@@ -43,23 +56,24 @@ public class RuntimeDatabaseProcessor {
      */
     public void dropDatabase (String name) throws Exception
     {
+        errorCode = -1;
         getSystemCatalog().deleteSchema(name);
+        errorCode = 0;
     }
     
     /**
      * Genera un listado de todos los Schemas existentes
      * @return Lista con los nombres de los esuqemas
      */
-    public List<String> listDatabases ()
+    public void listDatabases ()
     {
         List<Schema> list = systemCatalog.getSchemas();
-        List<String> schemesList = new ArrayList<>();
         for (Schema database : list)
         {
-            schemesList.add(database.name);
+            resultList.add(database.name);
             System.out.println(database.name);
         }
-        return schemesList;
+        result = resultList.toString();
     }
     
     /**
@@ -104,14 +118,18 @@ public class RuntimeDatabaseProcessor {
      * tabla entre otros.
      * @throws java.lang.Exception En caso de que el Schema no exista
      */
-    public String displayDatabase (String name) throws Exception
+    public void displayDatabase (String name) throws Exception
     {
+        errorCode = -1;
+        String totalResult = "";
         Schema schema = systemCatalog.getSchema(name);
         List<Table> tablas = schema.getTables();
         for (Table tabla : tablas)
         {
-            System.out.println("Table: " + tabla.name);
-            utils.DisplayHelper help = new utils.DisplayHelper();
+            totalResult += ("Table: " + tabla.name + "\n");
+            
+            List<String> titulo = Arrays.asList("Field", "Type", "Null", "Key");
+            ResultSetDisplay rsd = new ResultSetDisplay(titulo);
             for (int index = 0; index<tabla.columnNames.size(); index++)
             {
                 String nule = "YES";
@@ -142,14 +160,20 @@ public class RuntimeDatabaseProcessor {
                 }
                 String type = tabla.columnTypes.get(index).toString();
                 String field = tabla.columnNames.get(index);
-                help.addRow(    field, 
-                                type, 
-                                nule, key);
+                
+                List<String> values = Arrays.asList(field, type, nule, key);
+                ResultSetNode node = new ResultSetNode(values);
+                rsd.addRow(node);
             }
-            help.print();
-            System.out.println("");
+            //rsd.print();
+            
+            totalResult += rsd.toString();
+            totalResult += "\n";
         }
-        return "";
+        errorCode = 0;
+        result = totalResult;
+        
+        System.out.println(result); /* Quitar cuando sea API */
     }
     
     /**
@@ -168,8 +192,10 @@ public class RuntimeDatabaseProcessor {
      */
     public void setDatabase (String name) throws Exception
     {
+        errorCode = -1;
         Schema oldSchema = systemCatalog.getSchema(name);
         actualSchema = oldSchema;
+        errorCode = 0;
     }
     
     /**
@@ -184,6 +210,7 @@ public class RuntimeDatabaseProcessor {
                             String primaryKey, 
                             List<ColumnDefinition> columns) throws Exception
     {
+        errorCode = -1;
         if (actualSchema == null)
         {
             throw new exceptions.NoSchemaSelectedException();
@@ -192,6 +219,7 @@ public class RuntimeDatabaseProcessor {
         {
             actualSchema.createTable(name, primaryKey, columns);
         }
+        errorCode = 0;
     }
     
     /**
@@ -207,6 +235,7 @@ public class RuntimeDatabaseProcessor {
      */
     public void alterTable (String name, Constraint constraint) throws Exception
     {
+        errorCode = -1;
         if (actualSchema == null)
         {
             throw new exceptions.NoSchemaSelectedException();
@@ -217,6 +246,7 @@ public class RuntimeDatabaseProcessor {
             oldTable.createConstraint(constraint, 
                     actualSchema.getTable(((ForeignKey)constraint).referencedTable));
         }
+        errorCode = 0;
     }
     
     /**
@@ -227,6 +257,7 @@ public class RuntimeDatabaseProcessor {
      */
     public void dropTable (String name) throws Exception
     {
+        errorCode = -1;
         if (actualSchema == null)
         {
             throw new exceptions.NoSchemaSelectedException();
@@ -235,6 +266,7 @@ public class RuntimeDatabaseProcessor {
         {
             actualSchema.deleteTable(name);
         }
+        errorCode = 0;
     }
     
     /**
@@ -251,12 +283,14 @@ public class RuntimeDatabaseProcessor {
         return 0;
     }
         
-    public int select ( List<SelectColumn> selectionList,
+    public void select ( List<SelectColumn> selectionList,
                         String tableNameFrom,
                         List<JoinObject> listJoin,
                         WhereStatment whereStatment,
                         String groupingColumns) throws Exception
     {
+        errorCode = -1;
+        ResultSet rs;
         if (actualSchema == null)
         {
             throw new exceptions.NoSchemaSelectedException();
@@ -281,60 +315,18 @@ public class RuntimeDatabaseProcessor {
                 joinResult = actualSchema.applyJoin(tableNameFrom, listJoin);
             }
             
-            actualTable.select( selectionList, 
-                                joinResult, 
-                                whereStatmentColumn, 
-                                whereStatmentOperator, 
-                                whereStatmentValue, 
-                                groupingColumns);
+            rs = actualTable.select(    selectionList, 
+                                        joinResult, 
+                                        whereStatmentColumn, 
+                                        whereStatmentOperator, 
+                                        whereStatmentValue, 
+                                        groupingColumns);
             
-            
-            /*
-            if (whereStatment == null)
-            {
-                if (groupingColumns.equals(""))
-                {
-                    if (!listJoin.isEmpty())
-                    {
-                        List<Register> joinResult = actualSchema.applyJoin(tableNameFrom, listJoin);
-                        actualTable.select(selectionList, joinResult);
-                    }
-                    else
-                        actualTable.select(selectionList);
-                }
-                else
-                {
-                    if (!listJoin.isEmpty())
-                    {
-                        List<Register> joinResult = actualSchema.applyJoin(tableNameFrom, listJoin);
-                        actualTable.select(selectionList, joinResult);
-                    }
-                    else
-                        actualTable.select( selectionList, 
-                                    new ArrayList<>(), 
-                                    null, 
-                                    null, 
-                                    null, 
-                                    groupingColumns);
-                }
-            }
-            else
-            {
-                if (groupingColumns.equals(""))
-                {
-                    actualTable.select( selectionList, 
-                                        whereStatment.column, 
-                                        whereStatment.operator, 
-                                        whereStatment.value);
-                }
-                else
-                {
-
-                }
-            }
-            */
         }
-        return 0;
+        errorCode = 0;
+        selectAnswer = rs;
+        
+        System.out.println(rs.toString()); /* Quitar cuando sea API */
     }
     
     /**
@@ -358,6 +350,7 @@ public class RuntimeDatabaseProcessor {
     public void delete ( String tableName,
                         WhereStatment whereStatment) throws Exception
     {
+        errorCode = -1;
         if (actualSchema == null)
         {
             throw new exceptions.NoSchemaSelectedException();
@@ -369,6 +362,7 @@ public class RuntimeDatabaseProcessor {
                                         whereStatment.operator,
                                         whereStatment.value);
         }
+        errorCode = 0;
     }
     
     /**
@@ -382,6 +376,7 @@ public class RuntimeDatabaseProcessor {
                             List<String> columns,
                             List<String> values) throws Exception
     {
+        errorCode = -1;
         if (columns.size() != values.size())
             throw new exceptions.NumberOfValuesException();
         if (actualSchema == null)
@@ -393,6 +388,7 @@ public class RuntimeDatabaseProcessor {
             Table actualTable = actualSchema.getTable(tableName);
             actualTable.insertRegister(columns, values);
         }
+        errorCode = 0;
     }
 
     /**

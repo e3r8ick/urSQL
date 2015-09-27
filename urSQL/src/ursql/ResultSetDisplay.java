@@ -99,4 +99,59 @@ public class ResultSetDisplay {
         
     }
     
+    @Override
+    public String toString()
+    {
+        String result = "";
+        result += getLine();
+        result += getRow(columnNames);
+        result += getLine();
+        for (ResultSetNode obj : values)
+        {
+            result += getRow(obj.values);
+        }
+        result += getLine();
+        return result;
+    }
+    
+    private String getLine ()
+    {
+        String result = "";
+        for (int column=0;column<columnSizes.size();column++)
+        {
+            result += ("+");
+            for (int i=0;i<columnSizes.get(column)+2;i++)
+                result += ("-");
+            if (column == columnSizes.size()-1)
+            {
+                result += ("+");
+            }
+        }
+        return result + "\n";
+    }
+    
+    private String getRow (List<String> rowValues)
+    {
+        String result = "";
+        for (int column=0; column<columnSizes.size(); column++)
+        {
+            if (column == 0)
+            {
+                result += ("| ");
+                result += (completeString(rowValues.get(column), columnSizes.get(column)-1));
+            }
+            else if (column == columnSizes.size()-1)
+            {
+                result += (" | ");
+                result += (completeString(rowValues.get(column), columnSizes.get(column)-1));
+                result += (" |");
+            }
+            else
+            {
+                result += (" | ");
+                result += (completeString(rowValues.get(column), columnSizes.get(column)-1));
+            }
+        }
+        return result + "\n";
+    }
 }

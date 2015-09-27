@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * Facade que conecta las aplicaciones con la API de urSQL
@@ -13,8 +14,29 @@ import java.io.PrintWriter;
  */
 public class Connection {
     
+    /* IMPORTANTE borrar las respuestas cadavez que se ejecuta un comando */
+    
     private objects.RuntimeDatabaseProcessor linkToWorld;
+    
+    public boolean error ()
+    {
+        boolean bandera = false;
+        if (linkToWorld.errorCode == -1)
+            bandera = true;
+        linkToWorld.errorCode = 1;
+        return bandera;
+    }
         
+    public String getStringAnswer ()
+    {
+        return linkToWorld.result;
+    }
+    
+    public List<String> getListAnswer ()
+    {
+        return linkToWorld.resultList;
+    }
+    
     public void startConnection ()
     {
         linkToWorld = new objects.RuntimeDatabaseProcessor();

@@ -169,4 +169,15 @@ public class ResultSet {
         rsd.print();
     }
     
+    @Override
+    public String toString()
+    {
+        ResultSetDisplay rsd = new ResultSetDisplay(columns);
+        for (ResultSetNode node : values)
+        {
+            rsd.addRow(node);
+        }
+        return rsd.toString();
+    }
+    
 }

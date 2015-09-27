@@ -42,7 +42,6 @@ public class SystemCatalog {
         Schema tmp = schemas.get(0);
         for(int i = 0; i<schemas.size();i++){
             if(schemas.get(i).getName().equals(name)){
-                System.out.println(schemas.get(i));
                 tmp =schemas.get(i);
                 break;
             }
