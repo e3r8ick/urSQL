@@ -172,12 +172,14 @@ type                    ::=     INTEGER
                                     NUM:a COMA NUM:b CERRARPAR
                                 {:
                                     RESULT = new URSQL_Decimal(
-                                        a.getEntero(),
-                                        b.getEntero());
+                                        Integer.parseInt(a.getCadena()),
+                                        Integer.parseInt(b.getCadena())
+                                    );
                                 :}
                                 | CHAR ABRIRPAR NUM:a CERRARPAR
                                 {:
-                                    RESULT = new URSQL_Char(a.getEntero());
+                                    RESULT = 
+                                        new URSQL_Char( Integer.parseInt(a.getCadena()));
                                 :}
                                 | VARCHAR
                                 {:
@@ -288,6 +290,10 @@ value                  ::=      ID:a
                                     listaValuesInsert.add(a.getCadena().replaceAll("\"", ""));
                                 :}
                                 | NUM:a
+                                {:
+                                    listaValuesInsert.add(a.getCadena());
+                                :}
+                                | DEC:a
                                 {:
                                     listaValuesInsert.add(a.getCadena());
                                 :};

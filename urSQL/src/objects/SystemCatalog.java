@@ -47,7 +47,7 @@ public class SystemCatalog {
             }
         }
         if(!(tmp.getName().equals(name))){
-            System.out.println("Esquema no encontrado");
+            //System.out.println("Esquema no encontrado");
         }
         return tmp;
     }
@@ -112,10 +112,8 @@ public class SystemCatalog {
 
                xmlOutput.setFormat(Format.getPrettyFormat());
                xmlOutput.output(doc, new FileWriter(Constants.SCHEMAS_FILE));
-
-               System.out.println("Esquema "+getSchemas().get(i).getName()+" Salvado");
          } catch (IOException io) {
-           System.out.println(io.getMessage());
+           //System.out.println(io.getMessage());
          }
         }
         XMLOutputter xmlOutput = new XMLOutputter();
@@ -135,7 +133,7 @@ public class SystemCatalog {
                xmlOutput2.output(doc2, new FileWriter(Constants.SCHEMA_PATH+getSchemas().get(i).getName()+".xml"));
 
          } catch (IOException io) {
-           System.out.println(io.getMessage());
+           //System.out.println(io.getMessage());
          }
         }
     }
@@ -163,8 +161,8 @@ public class SystemCatalog {
                loadSingleSchema(schema.getValue());
            }
        }catch ( IOException | JDOMException io ) {
-           System.out.println( io.getMessage() );
-           System.out.println("No hay esquemas para cargar");
+           //System.out.println( io.getMessage() );
+           //System.out.println("No hay esquemas para cargar");
        }
     }
     
@@ -196,7 +194,7 @@ public class SystemCatalog {
            }
            tmp.loadTables();
        }catch ( IOException | JDOMException io ) {
-           System.out.println( io.getMessage() );
+           //System.out.println( io.getMessage() );
        }
     }
     

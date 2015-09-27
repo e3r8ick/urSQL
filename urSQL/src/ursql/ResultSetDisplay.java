@@ -58,6 +58,10 @@ public class ResultSetDisplay {
             {
                 System.out.print("| ");
                 System.out.print(completeString(rowValues.get(column), columnSizes.get(column)-1));
+                if (columnSizes.size() == 1)
+                {
+                    System.out.print(" |");
+                }
             }
             else if (column == columnSizes.size()-1)
             {
@@ -139,6 +143,10 @@ public class ResultSetDisplay {
             {
                 result += ("| ");
                 result += (completeString(rowValues.get(column), columnSizes.get(column)-1));
+                if (columnSizes.size() == 1)
+                {
+                    result += (" |");
+                }
             }
             else if (column == columnSizes.size()-1)
             {

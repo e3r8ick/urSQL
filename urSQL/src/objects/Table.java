@@ -155,10 +155,8 @@ public class Table implements utils.Constants, Comparable<Table> {
             // display nice nice
             xmlOutput.setFormat(Format.getPrettyFormat());
             xmlOutput.output(doc, new FileWriter(Constants.DATOS+name+".xml"));
-
-            System.out.println("Arbol "+name+" salvado");
           } catch (IOException io) {
-            System.out.println(io.getMessage());
+            //System.out.println(io.getMessage());
           }
         }
     }
@@ -191,8 +189,8 @@ public class Table implements utils.Constants, Comparable<Table> {
                //System.out.println( "Esquema: "+schema.getValue());
            }
        }catch ( IOException | JDOMException io ) {
-           System.out.println( io.getMessage() );
-           System.out.println("No hay esquemas para cargar");
+           //System.out.println( io.getMessage() );
+           //System.out.println("No hay esquemas para cargar");
        }
     }
     
@@ -460,7 +458,7 @@ public class Table implements utils.Constants, Comparable<Table> {
             }
             else
             {
-                if (list.get(index).atributeValues.get(count).equals(lastValue))
+                if (list.get(index).atributeValues.get(registerIndex).equals(lastValue))
                 {
                     registers.add(list.get(index));
                     count++;
@@ -544,7 +542,7 @@ public class Table implements utils.Constants, Comparable<Table> {
     {
         /* Conjunto de Registros antes del WHERE, GROUP BY y el SELECT */
         List<Register> initialRegisters = new ArrayList<>();
-        
+                
         /* JOIN */
         if (!joinResult.isEmpty())
             initialRegisters = joinResult;
@@ -647,7 +645,7 @@ public class Table implements utils.Constants, Comparable<Table> {
     
     private List<ResultSetNode> registerListToResultSetNodeList (   List<Register> registerList,
                                                                     List<SelectColumn> selectionList,
-                                                                    List<GroupRegister> groupResult)
+                                                                    List<GroupRegister> groupResult) throws Exception
     {        
         List<ResultSetNode> result = new ArrayList<>();
         for (GroupRegister registro : groupResult)

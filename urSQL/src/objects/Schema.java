@@ -94,7 +94,7 @@ public class Schema implements Comparable<Schema> {
         {
             tables.add(newTable);
         }
-        loadTables();
+        //loadTables();
     }
     
     public void deleteTable (String name) throws Exception
@@ -165,7 +165,7 @@ public class Schema implements Comparable<Schema> {
                //Se obtiene la raiz 
                Element rootNode = document.getRootElement();
                 setName(rootNode.getName());
-               System.out.println("Tabla: "+tables.get(i).name+" cargada");
+               //System.out.println("Tabla: "+tables.get(i).name+" cargada");
                //Se obtiene la lista de hijos de la raiz 
                List list = rootNode.getChildren();
                //Se recorre la lista de hijos
@@ -178,13 +178,13 @@ public class Schema implements Comparable<Schema> {
                   // List list2 = tabla.getChildren();
                    //for(int k = 0; k < list2.size();k++){
                     setTableFile(tabla.getValue());
-                       System.out.println( "TablaInfo: "+tabla.getValue());
+                       //System.out.println( "TablaInfo: "+tabla.getValue());
                        tmp = new Table(tables.get(i).name);
                        tables.add(tmp);
                      // saveTree();
                }
            }catch ( IOException | JDOMException io ) {
-               System.out.println( io.getMessage() );
+               //System.out.println( io.getMessage() );
            }
         }
     }
@@ -209,10 +209,8 @@ public class Schema implements Comparable<Schema> {
             // display nice nice
             xmlOutput.setFormat(Format.getPrettyFormat());
             xmlOutput.output(doc, new FileWriter(Constants.TABLES_PATH+getName()+".xml"));
-
-            System.out.println("Tabla "+getName()+" salvada");
           } catch (IOException io) {
-            System.out.println(io.getMessage());
+            //System.out.println(io.getMessage());
           }
         }
     }
@@ -228,7 +226,7 @@ public class Schema implements Comparable<Schema> {
     public void dropSchema(){
         File xmlFile = new File( schemaFile );
         xmlFile.delete();
-        System.out.println("Esquema Borrado");
+        //System.out.println("Esquema Borrado");
     }
 
     public List<Register> applyJoin (String table, List<JoinObject> joinList) throws Exception

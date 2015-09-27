@@ -12,7 +12,7 @@ public class Register implements Comparable<Register>  {
     
     protected List<DataType> atributeTypes;
     
-    protected List<String> atributeValues;
+    public List<String> atributeValues;
     
     protected long pointer;
     

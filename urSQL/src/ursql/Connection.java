@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,9 +14,7 @@ import java.util.List;
  * @author maikol_beto
  */
 public class Connection {
-    
-    /* IMPORTANTE borrar las respuestas cadavez que se ejecuta un comando */
-    
+        
     private objects.RuntimeDatabaseProcessor linkToWorld;
     
     public boolean error ()
@@ -29,12 +28,16 @@ public class Connection {
         
     public String getStringAnswer ()
     {
-        return linkToWorld.result;
+        String temporalResult = linkToWorld.result;
+        linkToWorld.result = "";
+        return temporalResult;
     }
     
     public List<String> getListAnswer ()
     {
-        return linkToWorld.resultList;
+        List<String> temporalResult = linkToWorld.resultList;
+        linkToWorld.resultList = new ArrayList<>();
+        return temporalResult;
     }
     
     public void startConnection ()
@@ -51,7 +54,7 @@ public class Connection {
         executeCommand("SET DATABASE " + database);
     }
     
-    public void executeCommand(String sql)
+    public ResultSet executeQuery (String sql)
     {
         escribir ("query.txt",sql);
             
@@ -69,7 +72,35 @@ public class Connection {
         {
             System.out.println(e);
         }
+        
+        ResultSet temporalResult = linkToWorld.selectAnswer;
+        linkToWorld.selectAnswer = null;
+        return temporalResult;
     }
+    
+    public boolean executeCommand(String sql)
+    {
+        escribir ("query.txt",sql);
+            
+        try
+        {
+            interpreter.analizador.AnalizadorLexico lexico = 
+                new interpreter.analizador.AnalizadorLexico(new FileReader("query.txt"));
+
+            interpreter.analizador.AnalizadorSintactico parser = 
+                new interpreter.analizador.AnalizadorSintactico(lexico, linkToWorld);
+
+            parser.parse();
+        }
+        catch (Exception e)
+        {
+            System.out.println(e);
+        }
+        
+        return error();
+    }
+    
+    
     public static void escribir(String direccion, String text){
         //metodo que guarda lo que esta escrito en un archivo de texto
 	try{	

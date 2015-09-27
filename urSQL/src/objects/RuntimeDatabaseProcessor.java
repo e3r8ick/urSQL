@@ -35,6 +35,12 @@ public class RuntimeDatabaseProcessor {
     
     public RuntimeDatabaseProcessor(){
         systemCatalog = new SystemCatalog();
+        
+        result = "";
+        resultList = new ArrayList<>();
+        errorCode = 1;
+        selectAnswer = null;
+        
     }
     
     /**
@@ -71,9 +77,13 @@ public class RuntimeDatabaseProcessor {
         for (Schema database : list)
         {
             resultList.add(database.name);
-            System.out.println(database.name);
         }
-        result = resultList.toString();
+        if (resultList != null)
+            result = resultList.toString();
+        else
+            result = "";
+        
+        System.out.println(result);
     }
     
     /**

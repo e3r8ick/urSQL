@@ -1,1 +1,1 @@
-SELECT especie, COUNT(especie) FROM serpiente GROUP BY especie
+SELECT MIN(nacimiento) FROM cocodrilo GROUP BY nacimiento
