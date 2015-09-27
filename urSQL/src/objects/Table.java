@@ -1,10 +1,12 @@
 package objects;
 
 import bplustree.*;
+import com.sun.jmx.remote.util.OrderClassLoaders;
 import exceptions.*;
 import interpreter.objects.ColumnDefinition;
 import objects.datatypes.*;
 import objects.constraints.*;
+import objects.select.*;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -15,6 +17,7 @@ import objects.select.*;
 import org.jdom2.*;
 import ursql.ResultSetNode;
 import utils.Constants;
+import utils.Convert;
 
 /**
  * Representación en caliente de una tabla de la base de datos 
@@ -239,15 +242,34 @@ public class Table implements utils.Constants, Comparable<Table> {
             if (constraint.type==Constants.PRIMARY_KEY)
                 primaryKey = ((PrimaryKey)constraint).primaryKey;
         }
+        if (!columns.contains(primaryKey))
+            throw new exceptions.NoPrimaryKeyException();
         for (String column : columnNames)
         {
+            String temporalValue = "";
             for (int index=0; index<columns.size(); index++)
             {
                 if (columns.get(index).equals(primaryKey))
                     primaryKey = values.get(index);
                 if ( columns.get(index).equals(column) )
-                    orderedValues.add(values.get(index));
+                    temporalValue = values.get(index);
             }
+            if (temporalValue.equals(""))
+            {
+                boolean NotNull = false;
+                for (Constraint constraint : constraints)
+                {
+                    if (constraint.type==Constants.NOT_NULL)
+                        if (column.equals(((NotNull)constraint).column))
+                            NotNull = true;
+                }
+                if (NotNull)
+                    throw new exceptions.NotNullColumnException(column);
+                else
+                    orderedValues.add("");
+            }
+            else
+                orderedValues.add(temporalValue);
         }
         
         if (registerTree.search(primaryKey)!=null)
@@ -302,32 +324,40 @@ public class Table implements utils.Constants, Comparable<Table> {
         }
     }
     
-    private List<ResultSetNode> registerListToResultSetNodeList (   List<Register> registerList,
-                                                                    List<SelectColumn> selectionList)
+    public void select (List<SelectColumn> selectionList, List<Register> joinResult)
     {
-        List<ResultSetNode> result = new ArrayList<>();
-        for (Register registro : registerList)
+        if (selectionList.isEmpty())
         {
-            List<String> temporalValue = new ArrayList<>();
-            for (SelectColumn selectColumn : selectionList)
+            ursql.ResultSet rs = new ursql.ResultSet(columnNames);
+            List<Register> whereResult = joinResult;
+            for (Register registro : whereResult)
+            {
+                ursql.ResultSetNode rsn = new ResultSetNode(registro.atributeValues);
+                rs.addValue(rsn);
+            }
+            rs.printResult();
+        }
+        else
+        {
+            List<String> selectColumnNames = new ArrayList<>();
+            for (SelectColumn selectColumn : selectionList) // Construimos el título del ResultSet
             {
                 if (selectColumn.type == Constants.COLUMN)
-                {
-                    for (int i=0;i<columnNames.size();i++)
-                    {
-                        if ( ((Column) selectColumn).column.equals(columnNames.get(i)))
-                            temporalValue.add(registro.atributeValues.get(i));
-                    }
-                }
+                    selectColumnNames.add(((Column) selectColumn).column);
                 else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
-                {
-                    /* NOT IMPLEMENTED YET */
-                }
+                    selectColumnNames.add(((AggregateFunction) selectColumn).column);
             }
-            result.add(new ResultSetNode(temporalValue));
+            ursql.ResultSet rs = new ursql.ResultSet(selectColumnNames);
+            List<Register> whereResult = joinResult;
+            List<ResultSetNode> resultSetValues = registerListToResultSetNodeList(whereResult,selectionList);
+            for (ResultSetNode node : resultSetValues)
+            {
+                rs.addValue(node);
+            }
+            rs.printResult();
         }
-        return result;
     }
+    
     
     public void select (List<SelectColumn> selectionList,
                         String column, String operator, String value // WHERE statment
@@ -365,7 +395,7 @@ public class Table implements utils.Constants, Comparable<Table> {
         }
     }
     
-    private List<Register> selectAll ()
+    protected List<Register> selectAll ()
     {
         List<Register> respuesta = new ArrayList<>();
         bplustree.BTreeLeafNode<String, Register> firstLeaf = registerTree.getFirstLeaf();
@@ -464,5 +494,284 @@ public class Table implements utils.Constants, Comparable<Table> {
     {
         return this.name.equals( ((Table)o).name );
     }
+    
+    public List<Register> bubbleSort (List<Register> list, int registerIndex) throws Exception
+    {
+        List<Register> respuesta = list;
+        for (int c = 0; c < respuesta.size()-1; c++) {
+            for (int d = 0; d < respuesta.size() - c - 1; d++) {
+                
+                int comparationResult = 0;
+                /* Castear el tipo de dato para compararlos */
+                String value1 = respuesta.get(d).atributeValues.get(registerIndex);
+                String value2 = respuesta.get(d+1).atributeValues.get(registerIndex);
+                
+                if (Convert.compare(value1, ">", value2, columnTypes.get(registerIndex).type))
+                {
+                    Register swap = respuesta.get(d);
+                    Register swap2 = respuesta.get(d+1);
+                    respuesta.remove(d);
+                    respuesta.add(d,swap2);
+                    respuesta.remove(d+1);
+                    respuesta.add(d+1,swap);
+                }
+            }
+        }
+        return respuesta;
+    }
+    
+    public List<GroupRegister> groupBy (List<Register> list, int registerIndex)
+    {
+        List<GroupRegister> respuesta = new ArrayList<>();
+        String lastValue = "";
+        List<Register> registers = new ArrayList<>();
+        int count = 0;
+        for (int index = 0; index<=list.size(); index++)
+        {
+            if (index == list.size())
+            {
+                respuesta.add( new GroupRegister(lastValue, registerIndex, registers, columnTypes.get(registerIndex)));
+            }
+            else
+            {
+                if (list.get(index).atributeValues.get(count).equals(lastValue))
+                {
+                    registers.add(list.get(index));
+                    count++;
+                }
+                else
+                {
+                    if (!(count == 0))
+                    {
+                        respuesta.add( new GroupRegister(lastValue, registerIndex, registers, columnTypes.get(registerIndex)));
+                    }
+                    registers = new ArrayList<>();
+                    registers.add(list.get(index));
+                    lastValue = list.get(index).atributeValues.get(registerIndex);
+                    count = 1;
+                }
+            }
+            
+        }
+        return respuesta;
+    }
+    
+    private List<Register> whereStatment (List<Register> initialList,
+        String column, String operator, String value) throws Exception
+    {
+        List<Register> respuesta = 
+                new ArrayList<>();
+        
+        int numColumn = 0;
+        for (int index = 0;index<columnNames.size();index++)
+        {
+            if (columnNames.get(index).equals(column))
+            {
+                numColumn = index;
+                break;
+            }
+        }
+        
+        for (Register registro : initialList)
+        {
+            if (registro != null)
+            {
+                Register registroTemporal = (Register) registro;
+                if (operator.equals("=") || operator.equals(">") || operator.equals("<"))
+                {
+                    if (utils.Convert.compare(registroTemporal.atributeValues.get(numColumn), 
+                            operator, value, columnTypes.get(numColumn).type))
+                    {
+                        respuesta.add(registroTemporal);
+                    }
+                }
+                else if (operator.equals("like"))
+                {
+                    if (utils.Convert.like(registroTemporal.atributeValues.get(numColumn), value))
+                    {
+                        respuesta.add(registroTemporal);
+                    }
+                }
+                else if (operator.equals("not"))
+                {
+                    if (!utils.Convert.like(registroTemporal.atributeValues.get(numColumn), value))
+                    {
+                        respuesta.add(registroTemporal);
+                    }
+                }
+                else if (operator.equals("is null") || operator.equals("is not null"))
+                {
+                    /* ´por implementar */
+                }
+            }
+        }
+
+        return respuesta;
+    }
+    
+    /* SELECT FINAL */
+    
+    public void select (List<SelectColumn> selectionList,
+                        List<Register> joinResult,
+                        String column, String operator, String value, // WHERE statment
+                        String groupingColumns) throws Exception
+    {
+        /* Conjunto de Registros antes del WHERE, GROUP BY y el SELECT */
+        List<Register> initialRegisters = new ArrayList<>();
+        
+        /* JOIN */
+        if (!joinResult.isEmpty())
+            initialRegisters = joinResult;
+        else
+            initialRegisters = selectAll();
+            
+        /* GROUP BY */
+        /* solamente se pueden retornar tablas agrupadas si están en el select o  con una función de agregación */
+        List<GroupRegister> groupResult = new ArrayList<>();
+        if (!groupingColumns.equals(""))
+        {
+            if (selectionList.isEmpty())
+                throw new exceptions.GroupByColumnException();
+            
+            for (SelectColumn selectColumn : selectionList) // Construimos el título del ResultSet
+            {
+                if (selectColumn.type == Constants.COLUMN)
+                    if ( !((Column) selectColumn).column.equals(groupingColumns) )
+                        throw new exceptions.GroupByColumnException();
+                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
+                    if ( !((AggregateFunction) selectColumn).column.equals(groupingColumns) )
+                        throw new exceptions.GroupByColumnException();
+            }
+            
+            int groupColumn = 0;
+            for (String orderColumnStr : columnNames)
+            {
+                if (orderColumnStr.equals(groupingColumns))
+                {
+                    break;
+                }
+                groupColumn++;
+            }
+            initialRegisters = bubbleSort(initialRegisters, groupColumn);
+            groupResult = groupBy(initialRegisters, groupColumn);
+        }
+        
+        /* ORDER BY */ 
+        /* IMPORTANTE... SE PUEDE IMPLEMENTAR
+        int orderColumn = 0;
+        for (String orderColumnStr : columnNames)
+        {
+            if (orderColumnStr.equals(groupingColumns))
+            {
+                break;
+            }
+            orderColumn++;
+        }
+        initialRegisters = bubbleSort(initialRegisters, orderColumn);
+        */
+        
+        /* WHERE */
+        if (!column.equals(""))
+        {
+            initialRegisters = whereStatment(initialRegisters, column, operator, value);
+        }
+        
+        /* SELECT */
+        if (selectionList.isEmpty())
+        {
+            ursql.ResultSet rs = new ursql.ResultSet(columnNames);
+            for (Register registro : initialRegisters)
+            {
+                ursql.ResultSetNode rsn = new ResultSetNode(registro.atributeValues);
+                rs.addValue(rsn);
+            }
+            rs.printResult();
+        }
+        else
+        {
+            List<String> selectColumnNames = new ArrayList<>();
+            for (SelectColumn selectColumn : selectionList) // Construimos el título del ResultSet
+            {
+                if (selectColumn.type == Constants.COLUMN)
+                    selectColumnNames.add(((Column) selectColumn).column);
+                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
+                    selectColumnNames.add(((AggregateFunction) selectColumn).toString());
+            }
+            ursql.ResultSet rs = new ursql.ResultSet(selectColumnNames);
+            
+            List<ResultSetNode> resultSetValues = new ArrayList<>();
+            
+            if (!groupResult.isEmpty())
+            {
+                resultSetValues = 
+                    registerListToResultSetNodeList(initialRegisters,selectionList, groupResult);
+            }
+            else
+            {
+                resultSetValues = 
+                    registerListToResultSetNodeList(initialRegisters,selectionList);
+            }
+            for (ResultSetNode node : resultSetValues)
+            {
+                rs.addValue(node);
+            }
+            rs.printResult();
+        }
+    }
+    
+    private List<ResultSetNode> registerListToResultSetNodeList (   List<Register> registerList,
+                                                                    List<SelectColumn> selectionList,
+                                                                    List<GroupRegister> groupResult)
+    {        
+        List<ResultSetNode> result = new ArrayList<>();
+        for (GroupRegister registro : groupResult)
+        {
+            List<String> temporalValue = new ArrayList<>();
+            for (SelectColumn selectColumn : selectionList)
+            {
+                if (selectColumn.type == Constants.COLUMN)
+                {
+                    if ( ((Column) selectColumn).column.equals(columnNames.get(registro.columnIndex)))
+                    {
+                        temporalValue.add(registro.columnValue);
+                    }
+                }
+                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
+                {
+                    temporalValue.add(registro.applyFunction( ((AggregateFunction) selectColumn).function ));
+                }
+            }
+            result.add(new ResultSetNode(temporalValue));
+        }
+        return result;
+    }
+    
+    private List<ResultSetNode> registerListToResultSetNodeList (   List<Register> registerList,
+                                                                    List<SelectColumn> selectionList)
+    {
+        List<ResultSetNode> result = new ArrayList<>();
+        for (Register registro : registerList)
+        {
+            List<String> temporalValue = new ArrayList<>();
+            for (SelectColumn selectColumn : selectionList)
+            {
+                if (selectColumn.type == Constants.COLUMN)
+                {
+                    for (int i=0;i<columnNames.size();i++)
+                    {
+                        if ( ((Column) selectColumn).column.equals(columnNames.get(i)))
+                            temporalValue.add(registro.atributeValues.get(i));
+                    }
+                }
+                else if (selectColumn.type == Constants.AGGREGATEFUNCTION)
+                {
+                    /* NOT IMPLEMENTED YET */
+                }
+            }
+            result.add(new ResultSetNode(temporalValue));
+        }
+        return result;
+    }
+    
     
 }

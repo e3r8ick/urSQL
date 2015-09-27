@@ -5,6 +5,7 @@ import interpreter.objects.*;
 import objects.constraints.*;
 import java.util.ArrayList;
 import java.util.List;
+import objects.select.JoinObject;
 import objects.select.SelectColumn;
 import utils.Constants;
 
@@ -252,7 +253,7 @@ public class RuntimeDatabaseProcessor {
         
     public int select ( List<SelectColumn> selectionList,
                         String tableNameFrom,
-                        List<String> listJoin,
+                        List<JoinObject> listJoin,
                         WhereStatment whereStatment,
                         String groupingColumns) throws Exception
     {
@@ -263,15 +264,58 @@ public class RuntimeDatabaseProcessor {
         else
         {
             Table actualTable = actualSchema.getTable(tableNameFrom);
+            
+            String whereStatmentColumn = "";
+            String whereStatmentOperator = "";
+            String whereStatmentValue = "";
+            if (whereStatment != null)
+            {
+                whereStatmentColumn = whereStatment.column;
+                whereStatmentOperator = whereStatment.operator;
+                whereStatmentValue = whereStatment.value;
+            }
+            
+            List<Register> joinResult = new ArrayList<>();
+            if (!listJoin.isEmpty())
+            {
+                joinResult = actualSchema.applyJoin(tableNameFrom, listJoin);
+            }
+            
+            actualTable.select( selectionList, 
+                                joinResult, 
+                                whereStatmentColumn, 
+                                whereStatmentOperator, 
+                                whereStatmentValue, 
+                                groupingColumns);
+            
+            
+            /*
             if (whereStatment == null)
             {
                 if (groupingColumns.equals(""))
                 {
-                    actualTable.select(selectionList);
+                    if (!listJoin.isEmpty())
+                    {
+                        List<Register> joinResult = actualSchema.applyJoin(tableNameFrom, listJoin);
+                        actualTable.select(selectionList, joinResult);
+                    }
+                    else
+                        actualTable.select(selectionList);
                 }
                 else
                 {
-
+                    if (!listJoin.isEmpty())
+                    {
+                        List<Register> joinResult = actualSchema.applyJoin(tableNameFrom, listJoin);
+                        actualTable.select(selectionList, joinResult);
+                    }
+                    else
+                        actualTable.select( selectionList, 
+                                    new ArrayList<>(), 
+                                    null, 
+                                    null, 
+                                    null, 
+                                    groupingColumns);
                 }
             }
             else
@@ -288,6 +332,7 @@ public class RuntimeDatabaseProcessor {
 
                 }
             }
+            */
         }
         return 0;
     }

@@ -26,7 +26,7 @@ action code {:
 
     public List<SelectColumn> columnasSelect = new ArrayList<>();
 
-    public List<String> listajoin = new ArrayList<>();
+    public List<JoinObject> listajoin = new ArrayList<>();
 
     public List<String> listaValuesInsert = new ArrayList<>();
 
@@ -320,13 +320,17 @@ aggregatefunctions      ::=     COUNT ABRIRPAR ID:a CERRARPAR
 joinstatment            ::=     joinstatment2
                                 |;
 
-joinstatment2           ::=     joinstatment2 JOIN ID:b
+joinstatment2           ::=     joinstatment2 JOIN ID:a ON ID:b IGUAL ID:c
                                 {:
-                                    listajoin.add(b.getCadena());
+                                    listajoin.add(new JoinObject(   a.getCadena(),
+                                                                    b.getCadena(),
+                                                                    c.getCadena()));
                                 :}
-                                | JOIN ID:a
+                                | JOIN ID:a ON ID:b IGUAL ID:c
                                 {:
-                                    listajoin.add(a.getCadena());
+                                    listajoin.add(new JoinObject(   a.getCadena(),
+                                                                    b.getCadena(),
+                                                                    c.getCadena()));
                                 :};
 
 where                   ::=     WHERE ID:a compareoperator:b wherevalues:c

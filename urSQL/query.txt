@@ -1,1 +1,1 @@
-SELECT nombre,nacimiento FROM serpiente
+SELECT especie, COUNT(especie) FROM serpiente GROUP BY especie

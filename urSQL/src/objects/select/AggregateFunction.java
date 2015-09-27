@@ -19,4 +19,18 @@ public class AggregateFunction extends SelectColumn {
         this.function = function;
     }
     
+    public String toString()
+    {
+        String type = "";
+        if (function == Constants.COUNT)
+            type = "COUNT";
+        else if (function == Constants.AVERAGE)
+            type = "AVERAGE";
+        else if (function == Constants.MIN)
+            type = "MIN";
+        else if (function == Constants.MAX)
+            type = "MAX";
+        return type + "(" + column + ")";
+    }
+    
 }

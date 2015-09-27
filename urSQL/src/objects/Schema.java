@@ -1,5 +1,6 @@
 package objects;
 
+import exceptions.ColumnDoestExistsInJoinException;
 import exceptions.TableAlreadyExistsException;
 import exceptions.TableDoesntExistsException;
 import interpreter.objects.ColumnDefinition;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import objects.constraints.Constraint;
 import objects.constraints.ForeignKey;
+import objects.select.JoinObject;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -234,12 +236,67 @@ public class Schema implements Comparable<Schema> {
         System.out.println("Esquema Borrado");
     }
 
+    public List<Register> applyJoin (String table, List<JoinObject> joinList) throws Exception
+    {
+        Table tablaOriginal = tables.get(tables.indexOf(new Table (table)));
+        List<Register> listaOriginal = tablaOriginal.selectAll();
+        List<Register> respuesta = new ArrayList<>();
+        for (JoinObject joinObject : joinList)
+        {
+            Table tablaTemporal = tables.get(tables.indexOf(new Table (joinObject.tableForJoin))); // verificar que la tabla exista
+            List<Register> listaTemporal = tablaTemporal.selectAll();
+            
+            /* Calculamos cual es el´numero de columna de los datos que vamos a comparar */
+            int columnIndex1 = -1;
+            for (int index = 0; index < tablaOriginal.columnNames.size(); index++)
+            {
+                if (tablaOriginal.columnNames.get(index).equals(joinObject.columnFirstTable))
+                {
+                    columnIndex1 = index;
+                    break;
+                }
+            }
+            if (columnIndex1 == -1)
+                throw new exceptions.ColumnDoestExistsInJoinException();
+            
+            int columnIndex2 = -1;
+            for (int index = 0; index < tablaTemporal.columnNames.size(); index++)
+            {
+                if (tablaTemporal.columnNames.get(index).equals(joinObject.columnSecondTable))
+                {
+                    columnIndex2 = index;
+                    break;
+                }
+            }
+            if (columnIndex2 == -1)
+                throw new exceptions.ColumnDoestExistsInJoinException();
+            
+            for (Register registro : listaOriginal)
+            {
+                for (Register registro2 : listaTemporal)
+                {
+                    String value1 = registro.atributeValues.get(columnIndex1);
+                    String value2 = registro2.atributeValues.get(columnIndex2);
+                    if (value1.equals(value2))
+                    {
+                        if (!respuesta.contains(registro))
+                        {
+                            respuesta.add(registro);
+                        }
+                    }
+                }
+            }
+            listaOriginal = respuesta;
+            respuesta = new ArrayList<>();
+        }
+        return listaOriginal;
+    }
+    
     @Override
     public int compareTo(Schema o) {
         return this.getName().compareTo(o.getName());
     }
-    
-    
+        
     @Override
     public boolean equals (Object o)
     {
